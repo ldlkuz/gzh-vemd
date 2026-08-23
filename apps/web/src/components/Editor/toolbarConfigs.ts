@@ -5,6 +5,8 @@ import {
   Bold,
   BookPlus,
   Calendar,
+  ChartColumn,
+  ChartLine,
   Clock,
   Code,
   Columns,
@@ -158,6 +160,24 @@ export const mermaidPrimaryTemplates: MermaidTemplate[] = [
     "产品 B" : 30
     "产品 C" : 20
     "其他" : 10`,
+  },
+  {
+    icon: ChartColumn,
+    label: "柱状图",
+    code: `xychart-beta
+    title "建设成本对比"
+    x-axis [ "风冷", "冷板式", "浸没式" ]
+    y-axis "元/kW" 0 --> 25000
+    bar [2500, 5500, 18000]`,
+  },
+  {
+    icon: ChartLine,
+    label: "折线图",
+    code: `xychart-beta
+    title "液冷渗透率趋势"
+    x-axis [2022, 2024, 2026, 2028]
+    y-axis "渗透率(%)" 0 --> 60
+    line [8, 15, 30, 50]`,
   },
 ];
 

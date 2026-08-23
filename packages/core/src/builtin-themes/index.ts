@@ -28,6 +28,8 @@ import { foodAtlasTemplates } from "../themes/templates-food-atlas";
 import { foodAtlasSlotDefs } from "../themes/slotDefs-food-atlas";
 import { stayNotesTemplates } from "../themes/templates-stay-notes";
 import { stayNotesSlotDefs } from "../themes/slotDefs-stay-notes";
+import { wanqingTemplates } from "../themes/templates-wanqing";
+import { wanqingSlotDefs } from "../themes/slotDefs-wanqing";
 
 // ============================================================
 // 默认主题 · 微信绿
@@ -1655,10 +1657,124 @@ const themeStayNotes: ThemeDefinition = {
 };
 
 // ============================================================
+// 晚晴 · Wanqing
+// 设计语言：写给岁月的一份温柔——米纸承载、楷宋书卷气、赭橘唯一强调色、墨绿作叶脉辅助。
+// 面向长辈的高可读性：大字（正文 17px+ / 行距 2）、高对比暖棕墨字压米纸、
+// 宽呼吸、少装饰干扰、无盖章痕迹。封面用 background-image + 底部渐变叠字（position 会被公众号删除）。
+// 开卷封面（magazine-cover 扩展 image 槽）+ 引子卡（text-card 首字下沉）+ 螺纹分隔（divider）
+// + 引语（quote-card）+ 纯文字落款（end-card）为私有骨架。
+// ============================================================
+
+const themeWanqing: ThemeDefinition = {
+  meta: {
+    id: "wanqing",
+    name: "晚晴",
+    description:
+      "写给岁月的一份温柔。米纸楷宋、赭橘暖调、大字高对比，适合老年情感、怀旧随笔、家常家书与岁月感悟",
+    keywords: ["情感", "怀旧", "温情", "家书", "随笔", "楷体", "大字"],
+    version: "1.0.0",
+  },
+  tokens: {
+    color: {
+      primary: "#a8613a",
+      primaryDark: "#8f4f2d",
+      primaryLight: "#f0e2d0",
+      secondary: "#a8613a",
+      accent: "#a8613a",
+      background: "transparent",
+      bgSoft: "#f6efe0",
+      bgCard: "#fbf6ea",
+      bgMuted: "#efe1c8",
+      textStrong: "#3d3128",
+      textNormal: "#3d3128",
+      textSoft: "#6b5a4a",
+      border: "#d6c49c",
+      borderSoft: "#e4d6b8",
+    },
+    typography: {
+      fontFamily:
+        '"PingFang SC", "Microsoft YaHei", "Songti SC", "SimSun", sans-serif',
+      fontSize: "17px",
+      lineHeight: "2",
+      letterSpacing: 0.02,
+      heading: {
+        h1: {
+          fontSize: 28,
+          color: "#3d3128",
+          marginTop: 44,
+          marginBottom: 20,
+          fontWeight: "800",
+          preset: "plain",
+          letterSpacing: 0.8,
+        },
+        h2: {
+          fontSize: 23,
+          color: "#3d3128",
+          marginTop: 38,
+          marginBottom: 16,
+          fontWeight: "800",
+          preset: "plain",
+          letterSpacing: 0.6,
+        },
+        h3: {
+          fontSize: 19,
+          color: "#3d3128",
+          marginTop: 30,
+          marginBottom: 12,
+          fontWeight: "700",
+        },
+        h4: {
+          fontSize: 14,
+          color: "#a8613a",
+          marginTop: 26,
+          marginBottom: 10,
+          fontWeight: "700",
+          letterSpacing: 1,
+        },
+      },
+      codeFontFamily: '"SF Mono", "Cascadia Code", Consolas, monospace',
+    },
+    spacing: { pagePadding: 8, paragraphMargin: 16 },
+    border: { radius: 4 },
+    shadow: { enabled: true, value: "0 18px 40px rgba(80,55,30,0.12)" },
+  },
+  layout: {
+    preferredComponents: [
+      {
+        name: "magazine-cover",
+        reason: "开卷封面：background-image 背景图 + 底部渐变叠字，首屏即「晚晴」",
+      },
+      {
+        name: "text-card",
+        reason: "引子卡：小标「写给岁月」+ 首字下沉 + 大字衬线正文",
+      },
+      {
+        name: "quote-card",
+        reason: "引语：上下赭橘双线 + 居中大字，情绪停顿点",
+      },
+      { name: "pullquote", reason: "原生引用：左侧赭橘竖条 + 楷体大字" },
+      { name: "divider", reason: "螺纹分隔：发丝线 + ❖，分段呼吸" },
+      { name: "image-caption", reason: "场景图 + 图注，补充叙事" },
+      {
+        name: "end-card",
+        reason: "落款：淡线 + 落款标记 + 收束句，无声收场",
+      },
+    ],
+    density: "low",
+    tone: ["warm", "editorial", "nostalgic"],
+  },
+  // 晚晴私有骨架：background-image 封面 / 引子卡 / 螺纹分隔 / 引语 / 落款
+  templates: wanqingTemplates,
+  // 主题级扩展槽：magazine-cover 封面图 + text-card 引子标记 + end-card 落款
+  slotDefs: wanqingSlotDefs,
+  codeTheme: "github",
+};
+
+// ============================================================
 // 导出
 // ============================================================
 
-/** 17 套可选的内置主题 */
+/** 18 套可选的内置主题 */
 export const builtInThemeDefinitions: ThemeDefinition[] = [
   themeDefault,
   themeDataBlueprint,
@@ -1677,6 +1793,7 @@ export const builtInThemeDefinitions: ThemeDefinition[] = [
   themeShoppingGuide,
   themeFoodAtlas,
   themeStayNotes,
+  themeWanqing,
 ];
 
 /** 按 ID 查找内置主题定义 */

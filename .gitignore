@@ -66,3 +66,11 @@ docs/企业品牌公众号组件工作台开发方案.md
 # 本地调试产物 / 启动辅助
 packages/core/debug-article-output.html
 start-web.bat
+
+# ============================================================
+# 本地 tsc 旁路产物（同名 .ts 的编译输出，仅本机生成，不入库）
+# ============================================================
+packages/core/src/**/*.js
+packages/core/src/**/*.map
+apps/web/src/**/*.js
+apps/web/src/**/*.map

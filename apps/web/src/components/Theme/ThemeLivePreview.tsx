@@ -15,6 +15,7 @@ import type { DesignerVariables } from "./ThemeDesigner/types";
 import {
   getMermaidConfig,
   getThemedMermaidDiagram,
+  mermaidTokensFromTheme,
 } from "../../utils/mermaidConfig";
 
 /**
@@ -151,7 +152,9 @@ export const ThemeLivePreview = memo(function ThemeLivePreview({
         return;
       }
 
-      const initConfig = getMermaidConfig(designerVariables);
+      const initConfig = getMermaidConfig(designerVariables, {
+        themeTokens: mermaidTokensFromTheme(themeDefinition),
+      });
 
       const renderToken = ++mermaidRenderIdRef.current;
       for (const [index, block] of blocks.entries()) {

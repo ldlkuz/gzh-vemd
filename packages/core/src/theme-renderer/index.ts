@@ -50,6 +50,7 @@ import { componentStylesStorybook } from "../themes/components-storybook";
 import { componentStylesShoppingGuide } from "../themes/components-shopping-guide";
 import { componentStylesFoodAtlas } from "../themes/components-food-atlas";
 import { componentStylesStayNotes } from "../themes/components-stay-notes";
+import { componentStylesWanqing } from "../themes/components-wanqing";
 
 /**
  * 内置主题的专属组件级皮肤（覆盖共享组件样式，实现「同骨架 · 强差异化」）。
@@ -73,6 +74,7 @@ const BUILTIN_THEME_COMPONENT_STYLES: Record<string, string> = {
   "shopping-guide": componentStylesShoppingGuide,
   "food-atlas": componentStylesFoodAtlas,
   "stay-notes": componentStylesStayNotes,
+  wanqing: componentStylesWanqing,
 };
 
 /** renderTheme 扩展选项（Phase 4） */

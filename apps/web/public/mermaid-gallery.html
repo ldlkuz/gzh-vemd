@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mermaid 图类型图谱</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.6.0/dist/mermaid.min.js"></script>
+<style>
+  :root{
+    --bg:#f6f6f3;
+    --bg-soft:#ffffff;
+    --ink:#17181c;
+    --muted:#70747e;
+    --line:#e2e2dc;
+    --accent:#3d6bf2;
+    --accent-soft:#e9edff;
+    --code:#1e2126;
+    --code-ink:#e8e9ee;
+  }
+  html[data-theme="dark"]{
+    --bg:#0f1115;
+    --bg-soft:#171a21;
+    --ink:#eef0f4;
+    --muted:#9aa0ab;
+    --line:#2a2e37;
+    --accent:#6b8bff;
+    --accent-soft:#1e2740;
+    --code:#0b0d11;
+    --code-ink:#dfe2ea;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    transition:background .3s ease,color .3s ease;
+  }
+  /* ============ hero ============ */
+  .hero{
+    padding:96px 24px 64px;
+    max-width:1060px;
+    margin:0 auto;
+    position:relative;
+  }
+  .hero .eyebrow{
+    font-size:13px;letter-spacing:.32em;color:var(--accent);text-transform:uppercase;font-weight:600;
+  }
+  .hero h1{
+    font-size:clamp(40px,7vw,76px);
+    line-height:1.02;
+    letter-spacing:-.02em;
+    font-weight:800;
+    margin:18px 0 0;
+  }
+  .hero h1 em{font-style:normal;color:var(--accent)}
+  .hero p.lede{
+    max-width:44ch;margin-top:20px;color:var(--muted);font-size:17px;
+  }
+  .hero .meta{
+    margin-top:34px;display:flex;flex-wrap:wrap;gap:10px;color:var(--muted);font-size:14px;
+  }
+  .hero .meta span{display:inline-flex;align-items:center;gap:6px}
+  .hero .meta .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);display:inline-block}
+
+  /* ============ sticky nav ============ */
+  .nav{
+    position:sticky;top:0;z-index:20;
+    background:color-mix(in srgb, var(--bg) 86%, transparent);
+    backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav-inner{
+    max-width:1060px;margin:0 auto;padding:12px 24px;
+    display:flex;align-items:center;gap:8px;overflow-x:auto;white-space:nowrap;
+    scrollbar-width:none;
+  }
+  .nav-inner::-webkit-scrollbar{display:none}
+  .nav-inner a{
+    color:var(--muted);text-decoration:none;font-size:13px;padding:6px 12px;border-radius:999px;transition:.15s;
+  }
+  .nav a:hover{color:var(--ink);background:var(--accent-soft)}
+  .nav a.active{color:var(--accent);background:var(--accent-soft)}
+  .theme-toggle{
+    margin-left:auto;flex-shrink:0;
+    background:var(--code);color:var(--code-ink);border:none;cursor:pointer;
+    padding:8px 14px;border-radius:999px;font-size:13px;font-weight:600;transition:.2s;
+  }
+  .theme-toggle:hover{transform:translateY(-1px)}
+
+  /* ============ section ============ */
+  .plate{
+    max-width:1060px;margin:0 auto;padding:0 24px 96px;
+  }
+  .intro{
+    padding:24px 0 40px;color:var(--muted);font-size:15px;max-width:60ch;
+  }
+
+  /* ============ item ============ */
+  .item{
+    border-top:1px solid var(--line);
+    padding:52px 0;
+  }
+  .item-head{
+    display:flex;align-items:baseline;gap:18px;margin-bottom:10px;
+  }
+  .item .no{
+    font-size:13px;color:var(--accent);font-weight:700;letter-spacing:.06em;
+    font-variant-numeric:tabular-nums;width:34px;flex-shrink:0;
+  }
+  .item h2{font-size:26px;font-weight:750;letter-spacing:-.01em}
+  .item .alias{color:var(--muted);font-size:14px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .item .desc{color:var(--muted);max-width:58ch;margin-bottom:24px}
+  .item-tools{display:flex;gap:8px;margin:14px 0 22px}
+  .item-tools button{
+    font-size:13px;padding:8px 16px;border-radius:999px;cursor:pointer;transition:.15s;
+    background:transparent;color:var(--muted);border:1px solid var(--line);
+  }
+  .item-tools button:hover{color:var(--ink);border-color:var(--accent)}
+  .item-tools button.on{background:var(--accent);color:#fff;border-color:transparent}
+
+  /* stage: 渲染区 / 源码区 */
+  .stage{
+    background:var(--bg-soft);border:1px solid var(--line);border-radius:14px;padding:28px;overflow-x:auto;
+    min-height:120px;transition:background .3s ease;
+  }
+  .stage .mermaid{
+    display:flex;justify-content:center;padding:8px 0;
+  }
+  .stage svg{max-width:100%;height:auto;display:block}
+  .stage pre, .stage code{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  .stage pre{
+    background:var(--code);color:var(--code-ink);
+    padding:20px;border-radius:10px;font-size:13px;line-height:1.7;overflow-x:auto;
+    white-space:pre;margin:0;
+  }
+  .stagecode .mermaid{display:none}
+  .stagecode pre{display:block}
+
+  /* ============ footer ============ */
+  .foot{border-top:1px solid var(--line);padding:40px 24px;text-align:center;color:var(--muted);font-size:13px}
+  .foot b{color:var(--ink);font-weight:600}
+
+  @media(max-width:640px){
+    .hero{padding:72px 20px 44px}
+    .plate{padding:0 20px 64px}
+    .item h2{font-size:22px}
+    .stage{padding:16px}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="eyebrow">Mermaid · 图谱</div>
+  <h1>一张图，<em>一</em>种语言。</h1>
+  <p class="lede">把数据、流程与关系画出来——从简单的流程图到桑基曲线。这里是 Mermaid 全部图表类型的陈列。</p>
+  <div class="meta">
+    <span><i class="dot"></i>17 类图表</span>
+    <span><i class="dot"></i>每张可切换「渲染 / 源码」</span>
+    <span><i class="dot"></i>Mermaid v11</span>
+  </div>
+</header>
+
+<nav class="nav"><div class="nav-inner" id="nav">
+  <a href="#flowchart">流程图</a>
+  <a href="#sequence">时序图</a>
+  <a href="#class">类图</a>
+  <a href="#state">状态图</a>
+  <a href="#er">ER 图</a>
+  <a href="#gantt">甘特图</a>
+  <a href="#pie">饼图</a>
+  <a href="#quadrant">四象限</a>
+  <a href="#requirement">需求图</a>
+  <a href="#git">Git 图</a>
+  <a href="#c4">C4</a>
+  <a href="#mindmap">思维导图</a>
+  <a href="#timeline">时间线</a>
+  <a href="#journey">旅程图</a>
+  <a href="#xychart">柱状·折线</a>
+  <a href="#sankey">桑基图</a>
+  <a href="#block">块状图</a>
+  <button class="theme-toggle" id="toggle">深色</button>
+</div></nav>
+
+<main class="plate">
+  <p class="intro">按图往下翻，或点顶部导航直达。每张图右下角可切换到对应语法源码——复制进支持 Mermaid 的编辑器即可复用。</p>
+
+  <!-- 1 -->
+  <section class="item" id="flowchart">
+    <div class="item-head"><span class="no">01</span><h2>流程图</h2><span class="alias">flowchart · graph</span></div>
+    <p class="desc">方向与分支——最常用的一类。`graph TD` 自上而下，`LR` 自左向右。</p>
+    <div class="item-tools"><button data-view="render" class="on">渲染</button><button data-view="code">源码</button></div>
+    <div class="stage"><div class="mermaid">graph TD
+  A[开始] --> B{登录成功?}
+  B -- 是 --> C[进入控制台]
+  B -- 否 --> D[提示错误]
+  C --> E[记录日志]
+  D --> E</div></div>
+  </section>
+
+  <!-- 2 -->
+  <section class="item" id="sequence">
+    <div class="item-head"><span class="no">02</span><h2>时序图</h2><span class="alias">sequenceDiagram</span></div>
+    <p class="desc">参与者之间的消息往来，适合接口调用、业务流程。</p>
+    <div class="item-tools"><button data-view="render" class="on">渲染</button><button data-view="code">源码</button></div>
+    <div class="stage"><div class="mermaid">sequenceDiagram
+  participant U as 用户
+  participant API as 服务
+  participant DB as 数据库
+  U->>API: 提交订单
+  API->>DB: 锁定库存
+  DB-->>API: 成功
+  API-->>U: 下单完成</div></div>
+  </section>
+
+  <!-- 3 -->
+  <section class="item" id="class">
+    <div class="item-head"><span class="no">03</span><h2>类图</h2><span class="alias">classDiagram</span></div>
+    <p class="desc">面向对象的结构与继承关系。</p>
+    <div class="item-tools"><button data-view="render" class="on">渲染</button><button data-view="code">源码</button></div>
+    <div class="stage"><div class="mermaid">classDiagram
+  class 动物 {
+    +String 名称
+    +void 呼吸()
+  }
+  class 狗
+  class 猫
+  动物 <|-- 狗 : 继承
+  动物 <|-- 猫
+  狗 : +void 吠()</div></div>
+  </section>
+
+  <!-- 4 -->
+  <section class="item" id="state">
+    <div class="item-head"><span class="no">04</span><h2>状态图</h2><span class="alias">stateDiagram-v2</span></div>
+    <p class="desc">对象或流程的状态流转。</p>
+    <div class="item-tools"><button data-view="render" class="on">渲染</button><button data-view="code">源码</button></div>
+    <div class="stage"><div class="mermaid">stateDiagram-v2
+  [*] --> 待处理
+  待处理 --> 处理中: 开始
+  处理中 --> 已完成: 成功
+  处理中 --> 已取消: 超时
+  已完成 --> [*]
+  已取消 --> [*]</div></div>
+  </section>
+
+  <!-- 5 -->
+  <section class="item" id="er">
+    <div class="item-head"><span class="no">05</span><h2>ER 图</h2><span class="alias">erDiagram</span></div>
+    <p class="desc">实体与关系的实体关系图，常见于数据库建模。</p>
+    <div class="item-tools"><button data-view="render" class="on">渲染</button><button data-view="code">源码</button></div>
+    <div class="stage"><div class="mermaid">erDiagram
+  CUSTOMER ||--o{ ORDER : 下单
+  ORDER ||--|{ ORDER_ITEM : 包含
+  PRODUCT ||--o{ ORDER_ITEM : 被包含
+  CUSTOMER {
+    int id
+    string name
+  }
+  ORDER {
+    int id
+    string status
+  }</div></div>
+  </section>
+
+  <!-- 6 -->
+  <section class="item" id="gantt">
+    <div class="item-head"><span class="no">06</span><h2>甘特图</h2><span class="alias">gantt</span></div>
+    <p class="desc">时间轴上的任务排期与依赖。</p>
+    <div class="item-tools"><button data-view="render" class="on">渲染</button><button data-view="code">源码</button></div>
+    <div class="stage"><div class="mermaid">gantt
+  title 上线计划
+  dateFormat YYYY-MM-DD
+  section 准备
+  需求调研   :a1, 2024-06-01, 7d
+  原型设计   :after a1, 5d
+  section 开发
+  前端开发   :2024-06-10, 10d
+  后端开发   :2024-06-10, 10d
+  section 发布
+  联调验收   :2024-06-22, 5d
+  正式上线   :2024-06-28, 2d</div></div>
+  </section>
+
+  <!-- 7 -->
+  <section class="item" id="pie">
+    <div class="item-head"><span class="no">07</span><h2>饼图</h2><span class="alias">pie</span></div>
+    <p class="desc">占比构成，一眼看分布。</p>
+    <div class="item-tools"><button data-view="render" class="on">渲染</button><button data-view="code">源码</button></div>
+    <div class="stage"><div class="mermaid">pie showData
+  title 流量来源占比
+  "自然搜索" : 45
+  "直接访问" : 28
+  "外链" : 17
+  "社媒" : 10</div></div>
+  </section>
+
+  <!-- 8 -->
+  <section class="item" id="quadrant">
+    <div class="item-head"><span class="no">08</span><h2>四象限图</h2><span class="alias">quadrantChart</span></div>
+    <p class="desc">把对象散进两轴四象限，用于优先级、价值评估。</p>
+    <div class="item-tools"><button data-view="render" class="on">渲染</button><button data-view="code">源码</button></div>
+    <div class="stage"><div class="mermaid">quadrantChart
+  title Priority Guide
+  x-axis Low --> High
+  y-axis Low --> High
+  quadrant-1 Keep
+  quadrant-2 Trim
+  quadrant-3 Invest
+  quadrant-4 Avoid
+  Core : [0.82, 0.20]
+  Chance : [0.65, 0.70]
+  Noise : [0.25, 0.90]</div></div>
+  </section>
+
+  <!-- 9 -->
+  <section class="item" id="requirement">
+    <div class="item-head"><span class="no">09</span><h2>需求图</h2><span class="alias">requirementDiagram</span></div>
+    <p class="desc">需求、元素与验证关系的建模。</p>
+    <div class="item-tools"><button data-view="render" class="on">渲染</button><button data-view="code">源码</button></div>
+    <div class="stage"><div class="mermaid">requirementDiagram
+  requirement req_login {
+    id: 1
+    text: "用户需通过登录验证"
+    risk: medium
+    verifymethod: test
+  }
+  element auth_svc {
+    type: system
+  }
+  auth_svc -satisfies -> req_login</div></div>
+  </section>
+
+  <!-- 10 -->
+  <section class="item" id="git">
+    <div class="item-head"><span class="no">10</span><h2>Git 图</h2><span class="alias">gitGraph</span></div>
+    <p class="desc">提交与分支合并的可视化。</p>
+    <div class="item-tools"><button data-view="render" class="on">渲染</button><button data-view="code">源码</button></div>
+    <div class="stage"><div class="mermaid">gitGraph
+  commit
+  branch feature
+  commit
+  commit
+  checkout main
+  commit
+  merge feature
+  commit tag: "v1.0"</div></div>
+  </section>
+
+  <!-- 11 -->
+  <section class="item" id="c4">
+    <div class="item-head"><span class="no">11</span><h2>C4 上下文</h2><span class="alias">C4Context · C4Container</span></div>
+    <p class="desc">C4 模型的系统上下文/容器视图。</p>
+    <div class="item-tools"><button data-view="render" class="on">渲染</button><button data-view="code">源码</button></div>
+    <div class="stage"><div class="mermaid">C4Context
+  title 系统上下文
+  Person(user, "访问者")
+  System(web, "门户网站")
+  SystemDb(db, "数据库")
+  Rel(user, web, "浏览 / 提交")
+  Rel(web, db, "读写数据")</div></div>
+  </section>
+
+  <!-- 12 -->
+  <section class="item" id="mindmap">
+    <div class="item-head"><span class="no">12</span><h2>思维导图</h2><span class="alias">mindmap</span></div>
+    <p class="desc">层级化的主题展开。</p>
+    <div class="item-tools"><button data-view="render" class="on">渲染</button><button data-view="code">源码</button></div>
+    <div class="stage"><div class="mermaid">mindmap
+  root((产品))
+    调研
+      竞品
+      用户访谈
+    设计
+      原型
+      可用性测试
+    开发
+      前端
+      后端
+    上线
+      灰度
+      监控</div></div>
+  </section>
+
+  <!-- 13 -->
+  <section class="item" id="timeline">
+    <div class="item-head"><span class="no">13</span><h2>时间线</h2><span class="alias">timeline</span></div>
+    <p class="desc">沿着时间轴的节点叙述。</p>
+    <div class="item-tools"><button data-view="render" class="on">渲染</button><button data-view="code">源码</button></div>
+    <div class="stage"><div class="mermaid">timeline
+  title 项目进程
+  2024 Q1 : 立项
+          : 组建团队
+  2024 Q2 : 原型完成
+          : 第一次评审
+  2024 Q3 : 正式上线
+          : 数据回收</div></div>
+  </section>
+
+  <!-- 14 -->
+  <section class="item" id="journey">
+    <div class="item-head"><span class="no">14</span><h2>用户旅程</h2><span class="alias">journey</span></div>
+    <p class="desc">分阶段的体验情绪曲线。</p>
+    <div class="item-tools"><button data-view="render" class="on">渲染</button><button data-view="code">源码</button></div>
+    <div class="stage"><div class="mermaid">journey
+  title 一次就医体验
+  section 到院
+    挂号      : 2: 患者
+    候诊      : 1: 患者
+  section 就诊
+    医生问诊   : 4: 医患
+    开检查单   : 3: 医患
+  section 离开
+    取报告     : 2: 患者
+    看结果     : 4: 医患</div></div>
+  </section>
+
+  <!-- 15 -->
+  <section class="item" id="xychart">
+    <div class="item-head"><span class="no">15</span><h2>柱状 · 折线</h2><span class="alias">xychart-beta</span></div>
+    <p class="desc">真正的数值图表：柱 + 折线叠加在同一坐标轴。</p>
+    <div class="item-tools"><button data-view="render" class="on">渲染</button><button data-view="code">源码</button></div>
+    <div class="stage"><div class="mermaid">xychart-beta
+  title "季度营收（万元）"
+  x-axis ["Q1", "Q2", "Q3", "Q4"]
+  y-axis "营收" 0 --> 1200
+  bar [520, 780, 900, 1120]
+  line [480, 720, 860, 1050]</div></div>
+  </section>
+
+  <!-- 16 -->
+  <section class="item" id="sankey">
+    <div class="item-head"><span class="no">16</span><h2>桑基图</h2><span class="alias">sankey-beta</span></div>
+    <p class="desc">流量/能量的流向与配比，宽度代表数值。</p>
+    <div class="item-tools"><button data-view="render" class="on">渲染</button><button data-view="code">源码</button></div>
+    <div class="stage"><div class="mermaid">sankey-beta
+  'Coal', 'Electricity', 300
+  'Gas', 'Electricity', 150
+  'Electricity', 'Lighting', 240
+  'Electricity', 'Industry', 150
+  'Electricity', 'Loss', 60</div></div>
+  </section>
+
+  <!-- 17 -->
+  <section class="item" id="block">
+    <div class="item-head"><span class="no">17</span><h2>块状图</h2><span class="alias">block-beta</span></div>
+    <p class="desc">用块拼布局的简单图，适合架构示意。</p>
+    <div class="item-tools"><button data-view="render" class="on">渲染</button><button data-view="code">源码</button></div>
+    <div class="stage"><div class="mermaid">block-beta
+  columns 3
+  客户端["客户端"] 网关["网关"] 服务["服务"]
+  缓存["缓存"] 数据库["数据库"] 日志["日志"]</div></div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <b>Mermaid 图类型图谱</b> · 17 类 · 每张可切换「渲染 / 源码」复制复用
+</footer>
+
+<script>
+  const MD = mermaid;
+  MD.initialize({
+    startOnLoad:false,
+    theme:'base',
+    themeVariables:{
+      primaryColor:'#4a6cf7',
+      primaryTextColor:'#1d2c53',
+      primaryBorderColor:'#4a6cf7',
+      lineColor:'#8fa0c0',
+      secondaryColor:'#ced9ff',
+      tertiaryColor:'#f1f4ff',
+      fontFamily:'-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif'
+    }
+  });
+
+  // 渲染所有图
+  function renderAll(){
+    return Promise.all(Array.from(document.querySelectorAll('.stage .mermaid')).map(function(el){
+      const code = el.textContent.trim();
+      return MD.render('mmd-'+el.dataset.id, code).then(function(r){
+        el.innerHTML = r.svg;
+        el.querySelector('svg').style.maxWidth='100%';
+      }).catch(function(e){ el.textContent='渲染失败：'+e.message; });
+    }));
+  }
+  document.querySelectorAll('.stage .mermaid').forEach(function(m,i){ m.dataset.id = i; });
+
+  // 渲染 / 源码 切换
+  document.querySelectorAll('.item').forEach(function(item){
+    const buttons = item.querySelectorAll('.item-tools button');
+    const stage = item.querySelector('.stage');
+    const mermaidEl = stage.querySelector('.mermaid');
+    let original = '';
+    if(mermaidEl) original = mermaidEl.textContent.trim();
+    buttons.forEach(function(btn){
+      btn.addEventListener('click', function(){
+        buttons.forEach(b=>b.classList.remove('on'));
+        btn.classList.add('on');
+        const view = btn.dataset.view;
+        if(view==='code'){
+          stage.classList.add('stagecode');
+          if(!stage.querySelector('pre')){
+            const pre = document.createElement('pre');
+            pre.textContent = original;
+            stage.appendChild(pre);
+          }
+        }else{
+          stage.classList.remove('stagecode');
+          const pre = stage.querySelector('pre');
+          if(pre) pre.remove();
+          if(mermaidEl.querySelector('svg')==null){
+            MD.render('mmdx-'+Math.random().toString(16).slice(2), original).then(function(r){
+              mermaidEl.innerHTML = r.svg;
+            }).catch(function(e){ mermaidEl.textContent='渲染失败：'+e.message; });
+          }
+        }
+      });
+    });
+  });
+
+  // 深色切换
+  const t = document.getElementById('toggle');
+  t.addEventListener('click', function(){
+    const dark = document.documentElement.getAttribute('data-theme')==='dark';
+    document.documentElement.setAttribute('data-theme', dark?'light':'dark');
+    t.textContent = dark?'深色':'浅色';
+  });
+
+  // 滚动高亮导航
+  const links = Array.from(document.querySelectorAll('.nav a[href^="#"]'));
+  const map = {};
+  links.forEach(function(a){ map[a.getAttribute('href').slice(1)] = a; });
+  const io = new IntersectionObserver(function(es){
+    es.forEach(function(e){
+      if(e.isIntersecting){
+        links.forEach(a=>a.classList.remove('active'));
+        const a = map[e.target.id]; if(a) a.classList.add('active');
+      }
+    });
+  }, {rootMargin:'-45% 0px -50% 0px'});
+  document.querySelectorAll('.item').forEach(it=>io.observe(it));
+
+  renderAll();
+</script>
+</body>
+</html>

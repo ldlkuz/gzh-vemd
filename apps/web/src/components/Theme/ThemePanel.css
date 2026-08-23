@@ -317,9 +317,12 @@
   border-color: transparent;
 }
 
-/* 复制示例按钮：靠右放置，与视图切换区分开 */
-.preview-source-toggle .sample-copy-btn {
+/* 预览操作按钮组（复制示例 / 导出组件语法）：整体靠右，与视图切换区分开 */
+.preview-source-toggle .preview-actions {
   margin-left: auto;
+  display: flex;
+  gap: 6px;
+  align-items: center;
 }
 
 .theme-form-fields {

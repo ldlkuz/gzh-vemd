@@ -21,6 +21,9 @@ import type {
   ThemeDefinition,
 } from "../../store/themes/builtInThemes";
 import type { ValidationError } from "@wemd/core";
+import { exportThemeComponentGuide } from "@wemd/core";
+import toast from "react-hot-toast";
+import { getElectron } from "../../hooks/useFileSystemHelpers";
 import { ThemeDesigner, type DesignerVariables } from "./ThemeDesigner";
 import { ThemeLivePreview } from "./ThemeLivePreview";
 import { resolveAppAssetPath } from "../../utils/assetPath";
@@ -156,8 +159,6 @@ export function ThemePanelView({
   onOverrideCopy,
   onCloseOverrideModal,
 }: ThemePanelViewProps) {
-  if (!open) return null;
-
   // 复制示例文章到剪贴板：优先当前主题的 samples/<themeId>.md，缺失回退 default.md
   const [sampleCopied, setSampleCopied] = useState(false);
   const handleCopySample = async () => {
@@ -179,6 +180,52 @@ export function ThemePanelView({
         /* 网络失败则尝试下一个候选路径 */
       }
     }
+  };
+
+  // 导出当前主题的组件语法文档（基础语法 + 全部组件 + 排版规格）为 .md 文件
+  // - Electron：弹出系统保存对话框，用户自选文件夹与文件名
+  // - 浏览器：下载到默认下载目录（浏览器无法弹出选夹框），toast 提示位置
+  const [guideCopied, setGuideCopied] = useState(false);
+  const flashExported = () => {
+    setGuideCopied(true);
+    window.setTimeout(() => setGuideCopied(false), 1500);
+  };
+  // 必须在所有 hooks 声明之后才可提前返回，否则违反 React Hooks 调用顺序
+  if (!open) return null;
+  const handleExportComponentGuide = async () => {
+    if (!themeDefinition) return;
+    const guide = exportThemeComponentGuide(themeDefinition, {
+      includeFormat: true,
+    });
+    const themeName = themeDefinition.meta.name || "theme";
+    const fileName = `${themeDefinition.meta.id || themeName}-component-guide.md`;
+
+    const electron = getElectron();
+    if (electron?.fs.saveFileWithDialog) {
+      const res = await electron.fs.saveFileWithDialog({
+        title: `导出「${themeName}」组件语法`,
+        defaultName: fileName,
+        content: guide,
+      });
+      if (res.success && res.filePath) {
+        toast.success(`已导出到 ${res.filePath}`);
+      } else if (!res.canceled) {
+        toast.error(res.error || "导出失败");
+      }
+      flashExported();
+      return;
+    }
+
+    // 浏览器回退：下载到默认下载目录
+    const blob = new Blob([guide], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`已开始下载 ${fileName}（保存到浏览器下载目录）`);
+    flashExported();
   };
 
   return (
@@ -485,15 +532,26 @@ export function ThemePanelView({
                         <Eye size={14} />
                         示例内容
                       </button>
-                      <button
-                        type="button"
-                        className="toggle-btn sample-copy-btn"
-                        onClick={handleCopySample}
-                        title="复制示例文章到剪贴板"
-                      >
-                        <Copy size={14} />
-                        {sampleCopied ? "已复制" : "复制示例"}
-                      </button>
+                      <div className="preview-actions">
+                        <button
+                          type="button"
+                          className="toggle-btn sample-copy-btn"
+                          onClick={handleCopySample}
+                          title="复制示例文章到剪贴板"
+                        >
+                          <Copy size={14} />
+                          {sampleCopied ? "已复制" : "复制示例"}
+                        </button>
+                        <button
+                          type="button"
+                          className="toggle-btn sample-copy-btn"
+                          onClick={handleExportComponentGuide}
+                          title="导出当前主题的组件语法文档（基础语法 + 全部组件 + 排版规格），可选择保存位置"
+                        >
+                          <Download size={14} />
+                          {guideCopied ? "已导出" : "导出组件语法"}
+                        </button>
+                      </div>
                     </div>
                     <ThemeLivePreview
                       css={previewCss}

@@ -253,7 +253,7 @@ function nativeLayerRule(
   // 标题：`##` → section-title / numbered-heading
   const ls = state.bMarks[startLine] + state.tShift[startLine];
   const lineStart = state.src.slice(ls, state.eMarks[startLine]);
-  const headingM = lineStart.match(/^(\#{1,6})\s+(.+)$/);
+  const headingM = lineStart.match(/^(#{1,6})\s+(.+)$/);
   if (headingM && headingM[1].length === HEADING_LEVEL) {
     componentId = NUMERIC_HEADING_RE.test(headingM[2].trim())
       ? "numbered-heading"
@@ -262,6 +262,12 @@ function nativeLayerRule(
     // 代码块 / 表格 / 块引用 / 分隔线 / 图片
     const fenceEnd = detectFence(state, startLine, endLine);
     if (fenceEnd !== -1) {
+      // Mermaid 围栏不包成 code-frame：交回标准 fence + highlight 渲染成
+      // <pre class="mermaid">，供前端渲染为图形；否则会被当普通代码块高亮成文本。
+      const fenceLang = lineStart
+        .replace(/^\s*(?:```+|~~~+)\s*/, "")
+        .split(/\s+/)[0];
+      if (fenceLang === "mermaid") return false;
       componentId = "code-frame";
       end = fenceEnd;
     } else {

@@ -11,6 +11,8 @@ contextBridge.exposeInMainWorld('electron', {
         readFile: (filePath: string) => ipcRenderer.invoke('file:read', filePath),
         createFile: (payload: { filename?: string; content?: string }) => ipcRenderer.invoke('file:create', payload),
         saveFile: (payload: { filePath: string; content: string }) => ipcRenderer.invoke('file:save', payload),
+        saveFileWithDialog: (payload: { title?: string; defaultName?: string; content: string }) =>
+            ipcRenderer.invoke('file:saveDialog', payload),
         renameFile: (payload: { oldPath: string; newName: string }) => ipcRenderer.invoke('file:rename', payload),
         deleteFile: (filePath: string) => ipcRenderer.invoke('file:delete', filePath),
         revealInFinder: (filePath: string) => ipcRenderer.invoke('file:reveal', filePath),

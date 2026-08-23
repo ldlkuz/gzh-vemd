@@ -26,6 +26,16 @@ interface ElectronAPI {
       filePath: string;
       content: string;
     }) => Promise<{ success: boolean; error?: string }>;
+    saveFileWithDialog: (payload: {
+      title?: string;
+      defaultName?: string;
+      content: string;
+    }) => Promise<{
+      success: boolean;
+      filePath?: string;
+      canceled?: boolean;
+      error?: string;
+    }>;
     renameFile: (payload: {
       oldPath: string;
       newName: string;

@@ -64,7 +64,7 @@ export interface LegacyThemeDefinition {
 export const isThemeSelectable = (theme: CustomTheme): boolean =>
   theme.isSelectable !== false;
 
-/** 15 个内置主题的 ID 顺序 */
+/** 18 个内置主题的 ID 顺序 */
 const BUILTIN_THEME_ORDER: Array<{ id: string; name: string }> = [
   { id: "default", name: "默认主题" },
   { id: "data-blueprint", name: "数据蓝图" },
@@ -83,6 +83,7 @@ const BUILTIN_THEME_ORDER: Array<{ id: string; name: string }> = [
   { id: "shopping-guide", name: "好物种草" },
   { id: "food-atlas", name: "美食图谱" },
   { id: "stay-notes", name: "民宿纪" },
+  { id: "wanqing", name: "晚晴" },
 ];
 
 /**

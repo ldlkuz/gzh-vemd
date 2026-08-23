@@ -1,5 +1,5 @@
 import type { IpcMainInvokeEvent } from "electron";
-import { ipcMain, shell } from "electron";
+import { ipcMain, shell, dialog } from "electron";
 import * as fs from "fs";
 import * as path from "path";
 import { getUniqueFilePath, scanWorkspace } from "../workspace/fileEntries";
@@ -189,6 +189,31 @@ export function registerFileHandlers(): void {
       if (filePath) {
         if (!isPathInsideWorkspace(filePath)) return;
         shell.showItemInFolder(filePath);
+      }
+    },
+  );
+
+  // 导出（选保存位置）：弹出系统保存对话框，让用户自选文件夹与文件名
+  ipcMain.handle(
+    "file:saveDialog",
+    async (
+      _event: IpcMainInvokeEvent,
+      payload: { title?: string; defaultName?: string; content: string },
+    ) => {
+      const { title, defaultName, content } = payload || {};
+      const result = await dialog.showSaveDialog({
+        title: title || "导出文件",
+        defaultPath: defaultName || "export.md",
+        filters: [{ name: "Markdown", extensions: ["md"] }],
+      });
+      if (result.canceled || !result.filePath) {
+        return { success: false, canceled: true };
+      }
+      try {
+        fs.writeFileSync(result.filePath, content ?? "", "utf-8");
+        return { success: true, filePath: result.filePath };
+      } catch (error: any) {
+        return { success: false, error: error.message };
       }
     },
   );

@@ -19,6 +19,7 @@ import {
 import {
   getMermaidConfig,
   getThemedMermaidDiagram,
+  mermaidTokensFromTheme,
 } from "../../utils/mermaidConfig";
 import { renderTableBlocksForPreview } from "../../services/wechatTableRenderer";
 import {
@@ -277,40 +278,47 @@ export function MarkdownPreview({ onScrollSyncReady }: MarkdownPreviewProps) {
   }, []);
 
   useEffect(() => {
-    if (!previewRef.current || !html) return;
+    const root = previewRef.current;
+    if (!root || !html) return;
 
     const mermaidBlocks = Array.from(
-      previewRef.current.querySelectorAll<HTMLElement>(".mermaid"),
+      root.querySelectorAll<HTMLElement>("pre.mermaid"),
     );
     if (mermaidBlocks.length === 0) return;
+
+    // 渲染前重新初始化，确保 mermaid 处于可用状态（与主题预览一致）
+    try {
+      mermaid.initialize({ startOnLoad: false });
+    } catch (e) {
+      console.error("Mermaid initialization failed (preview):", e);
+      return;
+    }
+
+    const initConfig = getMermaidConfig(designerVars, {
+      themeTokens: mermaidTokensFromTheme(themeDefinition),
+    });
     const renderToken = ++mermaidRenderIdRef.current;
 
-    // 延迟渲染以确保 DOM 更新完成
-    const timer = setTimeout(() => {
-      const initConfig = getMermaidConfig(designerVars);
+    mermaidBlocks.forEach((block, index) => {
+      if (!block.dataset.mermaidRaw) {
+        block.dataset.mermaidRaw = block.textContent ?? "";
+      }
+      const diagram = block.dataset.mermaidRaw ?? "";
+      if (!diagram.trim()) return;
 
-      mermaidBlocks.forEach((block, index) => {
-        if (!block.dataset.mermaidRaw) {
-          block.dataset.mermaidRaw = block.textContent ?? "";
-        }
-        const diagram = block.dataset.mermaidRaw ?? "";
-        if (!diagram.trim()) return;
+      const themedDiagram = getThemedMermaidDiagram(diagram, initConfig);
 
-        const themedDiagram = getThemedMermaidDiagram(diagram, initConfig);
-
-        mermaid
-          .render(`preview-${renderToken}-${index}`, themedDiagram)
-          .then(({ svg }) => {
-            if (mermaidRenderIdRef.current !== renderToken) return;
-            block.innerHTML = svg;
-          })
-          .catch((e) => {
-            console.error("Mermaid render error:", e);
-          });
-      });
-    }, 100);
-
-    return () => clearTimeout(timer);
+      mermaid
+        .render(`preview-${renderToken}-${index}`, themedDiagram)
+        .then(({ svg }) => {
+          // 已在更新的渲染或节点已被替换则不写入，避免旧结果覆盖新内容
+          if (mermaidRenderIdRef.current !== renderToken) return;
+          if (root.contains(block)) block.innerHTML = svg;
+        })
+        .catch((e) => {
+          console.error("Mermaid render error (preview):", e);
+        });
+    });
   }, [html, mermaidConfigKey, designerVars]);
 
   // 表格布局与发布偏好保持一致，开关变化时直接重排现有 DOM。

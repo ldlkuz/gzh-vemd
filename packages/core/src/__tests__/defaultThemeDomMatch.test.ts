@@ -2224,3 +2224,135 @@ describe("brand-sign：body 首段 logo 图片", () => {
     expect(out).toContain("让排版更优雅");
   });
 });
+
+// ============================================================
+// 晚晴 · Wanqing
+// ============================================================
+function renderWithWanqing(md: string): string {
+  const theme = getBuiltInThemeDefinition("wanqing")!;
+  const css = renderTheme(theme);
+  const templates = getThemeTemplates(theme);
+  const slotDefs = getThemeSlotDefs(theme);
+  const parser = createMarkdownParser({
+    mathRenderer: "katex",
+    getTemplate: (id) => templates.get(id),
+    getSlotDefs: (id) => slotDefs.get(id),
+  });
+  const raw = parser.render(md);
+  return processHtml(raw, css, true, true);
+}
+
+describe("晚晴：写给岁月 · 米纸楷宋 + 大字高对比 + 无盖章 · 主题私有骨架 + 皮肤", () => {
+  it("magazine-cover：开卷封面（background-image 图床 URL + 底部渐变，文字正常流锚底部）", () => {
+    const out = renderWithWanqing(
+      `::: magazine-cover
+写给岁月，也写给你
+
+**晚晴**
+
+有些话，在心里存了很久
+
+![](https://picsum.photos/seed/wq/1200/630)
+:::`,
+    );
+    expect(out).toContain("wemd-wq-eyebrow");
+    expect(out).toContain("wemd-wq-title");
+    expect(out).toContain("wemd-wq-opening");
+    // 图片进 background-image（图床 URL），无绝对定位叠字（公众号兼容）
+    const cover = out.slice(
+      out.indexOf("wemd-wq-cover"),
+      out.indexOf("wemd-wq-cover") + 700,
+    );
+    expect(cover).toMatch(
+      /background-image:.*url\(https:\/\/picsum\.photos\/seed\/wq\/1200\/630\)/,
+    );
+    expect(cover).not.toMatch(/position:\s*absolute/);
+    // 图区用 padding-top 百分比压出（非固定 height clamp）
+    expect(cover).toMatch(/padding:\s*50%/);
+    // 封面浅字（图底叠层，非共享深字）
+    expect(out).toMatch(/wemd-wq-title[^>]*color: ?#fff8ea/);
+    // 封面根元素无共享卡片边框（1px solid）残留
+    expect(out).not.toMatch(/wemd-magazine-cover[^>]*border: 1px solid/);
+  });
+
+  it("text-card：引子卡（小标「第一段」+ 首字下沉 + 大字衬线正文）", () => {
+    const out = renderWithWanqing(
+      `::: text-card
+第一段
+
+晚风拂过院里的藤椅，天色将晚。
+:::`,
+    );
+    expect(out).toContain("wemd-wq-lead-kicker");
+    const lead = out.slice(out.indexOf("wemd-wq-lead"));
+    // 首字下沉槽存在且承载「晚」（截取到 </span> 结束，避开内联 style）
+    expect(lead).toContain("wemd-wq-dropcap");
+    const dropStart = lead.indexOf("wemd-wq-dropcap");
+    const dropEnd = lead.indexOf("</span>", dropStart);
+    expect(lead.slice(dropStart, dropEnd)).toContain("晚");
+    // 首字从正文剥除后，正文以「风拂过…」继续
+    expect(lead).toContain("风拂过");
+  });
+
+  it("divider：螺纹分隔（发丝线 + 中央 ❖，中和共享双线）", () => {
+    const out = renderWithWanqing("正文\n\n---\n\n段落");
+    expect(out).toContain("wemd-wq-thread");
+    expect(out).toContain("wemd-wq-mark");
+    expect(out).toContain("❖");
+    // 共享 divider 的 ::before/::after 已被中和（导出后无残留）
+    expect(out).not.toMatch(/::/);
+  });
+
+  it("quote-card：引语（上下赭橘双线 + 居中大字 + 署名，不盖章）", () => {
+    const out = renderWithWanqing(
+      `::: quote-card
+「有人问你粥可温，有人与你立黄昏。」
+
+**—— 老周**
+:::`,
+    );
+    expect(out).toContain("wemd-wq-quote-text");
+    expect(out).toContain("wemd-wq-quote-author");
+    expect(out).toContain("老周");
+    expect(out).toMatch(/wemd-wq-quote-text[^>]*text-align: ?center/);
+    // 引语块无印章元素（纯文字，不盖章）
+    expect(out).not.toMatch(/wemd-wq-[a-z-]*seal/);
+  });
+
+  it("end-card：落款", () => {
+    const out = renderWithWanqing(
+      `::: end-card
+晚晴
+
+愿你往后的日子，日日花开，岁岁心安。
+:::`,
+    );
+    expect(out).toContain("wemd-wq-end-rule");
+    expect(out).toContain("wemd-wq-end-mark");
+    expect(out).toContain("wemd-wq-end-text");
+    expect(out).toContain("晚晴");
+    expect(out).toContain("岁岁心安");
+    // 收束句居中
+    expect(out).toMatch(/wemd-wq-end-text[^>]*text-align: ?center/);
+  });
+
+  it("可读性：正文为暖棕深字压米纸、赭橘主色、无灰糊浅字；深色封面配浅字", () => {
+    const theme = getBuiltInThemeDefinition("wanqing")!;
+    const css = renderTheme(theme);
+    // 正文深字（高对比）
+    expect(css).toContain("#wemd p {\n  margin: 0 0 1.6em;\n  color: #3d3128;");
+    // 主色赭橘在强调元素上
+    expect(css).toContain("#a8613a");
+    // #wemd 无整篇背景（交给公众号编辑器）：只查 #wemd { ... } 首个块
+    const wemdHead = css.slice(css.indexOf("#wemd {"), css.indexOf("#wemd {") + 400);
+    expect(wemdHead).not.toMatch(/background/);
+  });
+
+  it("导出无伪元素 / 结构伪类残留，且 #wemd 无整篇背景", () => {
+    const out = renderWithWanqing("正文内容\n\n---\n\n段落");
+    expect(out).not.toMatch(/::/);
+    expect(out).not.toMatch(/:nth-child|:first-child|:last-child|:not\(/);
+    const wemd = out.match(/<section id="wemd"[^>]*>/)?.[0] ?? "";
+    expect(wemd).not.toMatch(/background-color/);
+  });
+});

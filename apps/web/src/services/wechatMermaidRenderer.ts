@@ -8,6 +8,7 @@ import { useThemeStore } from "../store/themeStore";
 import {
   getMermaidConfig,
   getThemedMermaidDiagram,
+  mermaidTokensFromTheme,
 } from "../utils/mermaidConfig";
 import {
   applyNativeSubgraphTitleStyles,
@@ -69,7 +70,11 @@ const getThemeInfo = () => {
   const currentTheme =
     state.customThemes.find((t) => t.id === themeId) ||
     state.getAllThemes().find((t) => t.id === themeId);
-  return currentTheme?.designerVariables;
+  return {
+    designerVariables: currentTheme?.designerVariables,
+    // 内置主题无 designerVariables，用 tokens 兜底让导出图表跟随主题主色
+    themeTokens: mermaidTokensFromTheme(currentTheme?.definition),
+  };
 };
 
 const getSvgDimensions = (svgElement: SVGElement) => {
@@ -249,11 +254,14 @@ export const renderMermaidBlocks = async (
   const mermaidBlocks = Array.from(container.querySelectorAll("pre.mermaid"));
   if (mermaidBlocks.length === 0) return;
 
-  const designerVariables = getThemeInfo();
+  const { designerVariables, themeTokens } = getThemeInfo();
   const renderIdBase = `wemd-mermaid-${Date.now()}`;
 
   // 构建 Mermaid 配置并全局应用（关闭 htmlLabels 避免 foreignObject）
-  const initConfig = getMermaidConfig(designerVariables, { htmlLabels: false });
+  const initConfig = getMermaidConfig(designerVariables, {
+    htmlLabels: false,
+    themeTokens,
+  });
   const previousMermaidConfig = clonePlainConfig(
     mermaid.mermaidAPI.getSiteConfig(),
   );
