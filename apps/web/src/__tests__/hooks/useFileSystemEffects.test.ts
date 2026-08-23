@@ -25,6 +25,10 @@ const buildElectronMock = () => {
     readFile: vi.fn(async () => ({ success: true as const, content: "" })),
     createFile: vi.fn(async () => ({ success: true as const })),
     saveFile: vi.fn(async () => ({ success: true as const })),
+    saveFileWithDialog: vi.fn(async () => ({
+      success: true as const,
+      filePath: "guide.md",
+    })),
     renameFile: vi.fn(async () => ({ success: true as const })),
     deleteFile: vi.fn(async () => ({ success: true as const })),
     revealInFinder: vi.fn(async () => {}),
