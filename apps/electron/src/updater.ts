@@ -66,9 +66,9 @@ export function initAutoUpdate(getWindow: () => BrowserWindow | null): void {
     console.error('[autoUpdater] error:', err);
     const message = err?.message || String(err);
     if (updateAvailable) {
-      // 下载阶段失败：明确告知，避免用户误以为“检查失败”
-      send(mainWindow(), 'update:error', { stage: 'download', message });
-      updateAvailable = false;
+      // 下载过程中的 error（差异更新/分块请求的临时失败）由 electron-updater
+      // 内部自动重试或回退整包，这里只记日志，不弹"网络错误"，避免打扰用户。
+      // 只有在下载真正彻底失败时（downloadUpdate 的 Promise reject）才提示。
       return;
     }
     // 检查阶段失败：仅手动强制检查时提示
