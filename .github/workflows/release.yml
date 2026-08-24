@@ -53,12 +53,29 @@ jobs:
           name: wemd-macos
           path: apps/electron/release/WeMD-*-arm64-mac.zip
 
+      - name: Generate release body
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          # 从上一个 tag 到本次 tag 提取提交，生成简洁的 Markdown 更新日志
+          PREV_TAG=$(git tag --sort=-v:refname | sed -n '2p' || true)
+          {
+            echo "## 更新内容"
+            echo
+            if [ -n "$PREV_TAG" ]; then
+              git log "$PREV_TAG..HEAD" --pretty=format:'- %s' --no-merges
+            else
+              git log --pretty=format:'- %s' -20
+            fi
+            echo
+          } > release_body.md
+
       - name: Publish GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           name: GZH-WeMD ${{ github.ref_name }}
-          generate_release_notes: true
+          body_path: release_body.md
           files: |
             apps/electron/release/WeMD-*-arm64-mac.zip
             apps/electron/release/latest-mac.yml
@@ -98,10 +115,28 @@ jobs:
           name: wemd-windows
           path: apps/electron/release/*.exe
 
+      - name: Generate release body
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          PREV_TAG=$(git tag --sort=-v:refname | sed -n '2p' || true)
+          {
+            echo "## 更新内容"
+            echo
+            if [ -n "$PREV_TAG" ]; then
+              git log "$PREV_TAG..HEAD" --pretty=format:'- %s' --no-merges
+            else
+              git log --pretty=format:'- %s' -20
+            fi
+            echo
+          } > release_body.md
+
       - name: Publish GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
+          name: GZH-WeMD ${{ github.ref_name }}
+          body_path: release_body.md
           files: |
             apps/electron/release/*.exe
             apps/electron/release/latest.yml
@@ -142,10 +177,28 @@ jobs:
           name: wemd-linux
           path: apps/electron/release/*.AppImage
 
+      - name: Generate release body
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          PREV_TAG=$(git tag --sort=-v:refname | sed -n '2p' || true)
+          {
+            echo "## 更新内容"
+            echo
+            if [ -n "$PREV_TAG" ]; then
+              git log "$PREV_TAG..HEAD" --pretty=format:'- %s' --no-merges
+            else
+              git log --pretty=format:'- %s' -20
+            fi
+            echo
+          } > release_body.md
+
       - name: Publish GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
+          name: GZH-WeMD ${{ github.ref_name }}
+          body_path: release_body.md
           files: |
             apps/electron/release/*.AppImage
             apps/electron/release/latest-linux.yml
