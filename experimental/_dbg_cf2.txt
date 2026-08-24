@@ -1,0 +1,3 @@
+[default] bar=none pseudo=false
+[data-blueprint] bar=none pseudo=false
+[eastern-notes] bar=#3d5a63 pseudo=false

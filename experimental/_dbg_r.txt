@@ -1,0 +1,3 @@
+default -> border-radius: 8px ; border-radius: calc(8px + 4px) ; border-radius: calc(8px - 2px) ; border-radius: calc(8px - 2px)
+
+eastern-notes -> border-radius: 0px ; border-radius: calc(0px + 4px) ; border-radius: calc(0px - 2px) ; border-radius: calc(0px - 2px)

@@ -74,3 +74,15 @@ packages/core/src/**/*.js
 packages/core/src/**/*.map
 apps/web/src/**/*.js
 apps/web/src/**/*.map
+
+# ============================================================
+# 本地素材 / 交付物（不入库，统一放 experimental/，仅本机使用）
+# ============================================================
+# 闲鱼/示例营销素材
+experimental/mock-sale/
+# 本机文章草稿与演示文稿
+05-液冷技术深度解析.html
+05-液冷技术深度解析.md
+wanqing-component-guide.md
+wechat-plugin.rar
+docs/晚晴-老年人情感主题.html
