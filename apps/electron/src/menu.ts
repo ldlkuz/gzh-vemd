@@ -87,7 +87,7 @@ export function createMenu(getWindow: () => BrowserWindow | null): void {
       submenu: [
         {
           label: "检查更新...",
-          click: () => checkForUpdates(getWindow(), true),
+          click: () => checkForUpdates(getWindow, true),
         },
         { type: "separator" },
         {

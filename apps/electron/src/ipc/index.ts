@@ -16,5 +16,5 @@ export function registerIpcHandlers(
   registerFolderHandlers();
   registerShellHandlers();
   registerClipboardHandlers();
-  registerUpdateHandlers();
+  registerUpdateHandlers(getWindow);
 }

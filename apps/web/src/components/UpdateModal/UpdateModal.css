@@ -188,3 +188,62 @@
   color: #666;
   text-decoration: underline;
 }
+
+/* 下载进度条 */
+.update-modal-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px;
+}
+
+.update-modal-progress-bar {
+  flex: 1;
+  height: 8px;
+  background: #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.update-modal-progress-fill {
+  height: 100%;
+  background: linear-gradient(135deg, #07c160 0%, #06ad56 100%);
+  border-radius: 4px;
+  transition: width 0.2s ease;
+}
+
+.update-modal-progress-text {
+  font-size: 13px;
+  color: #07c160;
+  font-weight: 500;
+  min-width: 36px;
+  text-align: right;
+}
+
+/* 下载失败提示 */
+.update-modal-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  background: #fdf0f0;
+  border: 1px solid #f5c6c6;
+  color: #d33;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: left;
+  margin: 0 0 16px;
+}
+
+.update-modal-error svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.update-modal-btn.primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}

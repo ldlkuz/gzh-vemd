@@ -45,17 +45,33 @@ interface UpdateEventData {
   force?: boolean;
 }
 
+interface UpdateErrorData {
+  stage?: "check" | "download";
+  message?: string;
+}
+
+interface UpdateProgressData {
+  percent: number;
+  transferred: number;
+  total: number;
+  bytesPerSecond: number;
+}
+
 interface ElectronUpdateAPI {
   onUpdateAvailable?: (callback: (data: UpdateEventData) => void) => () => void;
   onUpToDate?: (
     callback: (data: { currentVersion: string }) => void,
   ) => () => void;
-  onUpdateError?: (callback: () => void) => () => void;
+  onUpdateError?: (callback: (data: UpdateErrorData) => void) => () => void;
+  onUpdateDownloading?: (
+    callback: (data: UpdateProgressData) => void,
+  ) => () => void;
   onUpdateDownloaded?: (
     callback: (data: UpdateEventData) => void,
   ) => () => void;
   removeUpdateListener?: (handler: (() => void) | undefined) => void;
   openReleases?: () => void;
+  download?: () => Promise<unknown>;
   restartAndInstall?: () => void;
 }
 
@@ -88,12 +104,14 @@ function App() {
 
   const isElectron = platform.isElectron;
 
-  // 更新提示状态（available=待下载提示；downloaded=已下载可重启安装）
+  // 更新提示状态（available=待下载；downloading=下载中带进度；downloaded=可重启；error=下载失败）
   const [updateInfo, setUpdateInfo] = useState<{
     latestVersion: string;
     currentVersion: string;
     releaseNotes: string;
-    status: "available" | "downloaded";
+    status: "available" | "downloading" | "downloaded" | "error";
+    progress?: number;
+    errorMessage?: string;
   } | null>(null);
 
   // 监听 Electron 更新事件
@@ -119,14 +137,23 @@ function App() {
       },
     );
 
+    const downloadingHandler = electron.update.onUpdateDownloading?.(
+      (data: UpdateProgressData) => {
+        setUpdateInfo((prev) =>
+          prev ? { ...prev, status: "downloading", progress: data.percent } : prev,
+        );
+      },
+    );
+
     const downloadedHandler = electron.update.onUpdateDownloaded?.(
       (data: UpdateEventData) => {
-        setUpdateInfo({
+        setUpdateInfo((prev) => ({
           latestVersion: data.latestVersion,
-          currentVersion: data.currentVersion || "",
-          releaseNotes: data.releaseNotes || "",
+          currentVersion: data.currentVersion || prev?.currentVersion || "",
+          releaseNotes: data.releaseNotes || prev?.releaseNotes || "",
           status: "downloaded",
-        });
+          progress: 100,
+        }));
       },
     );
 
@@ -139,14 +166,32 @@ function App() {
       },
     );
 
-    const errorHandler = electron.update.onUpdateError?.(() => {
-      import("react-hot-toast").then(({ default: toast }) => {
-        toast.error("检查更新失败，请稍后重试");
-      });
-    });
+    const errorHandler = electron.update.onUpdateError?.(
+      (data: UpdateErrorData) => {
+        import("react-hot-toast").then(({ default: toast }) => {
+          if (data.stage === "download") {
+            // 下载失败：在弹窗内展示，用户可重试下载
+            setUpdateInfo((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    status: "error",
+                    errorMessage: data.message || "下载更新失败，请稍后重试",
+                  }
+                : prev,
+            );
+          } else {
+            // 检查失败：用 toast 轻提示
+            toast.error("检查更新失败，请稍后重试");
+          }
+        });
+      },
+    );
 
     return () => {
       electron.update?.removeUpdateListener?.(availableHandler);
+      if (downloadingHandler)
+        electron.update?.removeUpdateListener?.(downloadingHandler);
       if (upToDateHandler)
         electron.update?.removeUpdateListener?.(upToDateHandler);
       if (errorHandler) electron.update?.removeUpdateListener?.(errorHandler);
@@ -242,9 +287,25 @@ function App() {
             latestVersion={updateInfo.latestVersion}
             currentVersion={updateInfo.currentVersion}
             releaseNotes={updateInfo.releaseNotes}
-            downloaded={updateInfo.status === "downloaded"}
+            status={updateInfo.status}
+            progress={updateInfo.progress}
+            errorMessage={updateInfo.errorMessage}
             onClose={() => setUpdateInfo(null)}
             onDownload={() => {
+              const api = (
+                window.electron as { update?: ElectronUpdateAPI }
+              )?.update;
+              if (api?.download) {
+                // available / error 状态下点击 → 触发或重试下载
+                api.download().then(() => {
+                  // 下载完成由 update:downloaded 事件接管（置 downloaded 并允许重启）
+                });
+                setUpdateInfo((prev) =>
+                  prev ? { ...prev, status: "downloading", progress: 0 } : prev,
+                );
+              }
+            }}
+            onRestart={() => {
               (
                 window.electron as { update?: ElectronUpdateAPI }
               )?.update?.restartAndInstall?.();

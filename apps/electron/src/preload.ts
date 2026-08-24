@@ -85,9 +85,22 @@ contextBridge.exposeInMainWorld('electron', {
             ipcRenderer.on('update:upToDate', handler);
             return handler;
         },
-        onUpdateError: (callback: () => void) => {
-            const handler = (_event: IpcRendererEvent) => callback();
+        onUpdateError: (callback: (data: {
+            stage?: 'check' | 'download';
+            message?: string;
+        }) => void) => {
+            const handler = (_event: IpcRendererEvent, data: any) => callback(data || {});
             ipcRenderer.on('update:error', handler);
+            return handler;
+        },
+        onUpdateDownloading: (callback: (data: {
+            percent: number;
+            transferred: number;
+            total: number;
+            bytesPerSecond: number;
+        }) => void) => {
+            const handler = (_event: IpcRendererEvent, data: any) => callback(data);
+            ipcRenderer.on('update:downloading', handler);
             return handler;
         },
         onUpdateDownloaded: (callback: (data: {
@@ -95,15 +108,18 @@ contextBridge.exposeInMainWorld('electron', {
             releaseNotes?: string;
         }) => void) => {
             const handler = (_event: IpcRendererEvent, data: any) => callback(data);
-            ipcRenderer.on('update:dowloaded', handler);
+            ipcRenderer.on('update:downloaded', handler);
             return handler;
         },
         removeUpdateListener: (handler: any) => {
             ipcRenderer.removeListener('update:available', handler);
             ipcRenderer.removeListener('update:upToDate', handler);
             ipcRenderer.removeListener('update:error', handler);
+            ipcRenderer.removeListener('update:downloading', handler);
+            ipcRenderer.removeListener('update:downloaded', handler);
         },
         openReleases: () => ipcRenderer.invoke('update:openReleases'),
+        download: () => ipcRenderer.invoke('update:download'),
         restartAndInstall: () => ipcRenderer.invoke('update:restartAndInstall'),
     },
 

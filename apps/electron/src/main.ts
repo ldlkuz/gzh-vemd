@@ -61,9 +61,9 @@ app.whenReady().then(() => {
   createMenu(getMainWindow);
 
   // 初始化自动更新（electron-updater 事件 → IPC），启动约 3 秒后静默检查一次
-  initAutoUpdate(mainWindow);
+  initAutoUpdate(getMainWindow);
   setTimeout(() => {
-    checkForUpdates(mainWindow);
+    checkForUpdates(getMainWindow);
   }, 3000);
 
   app.on("activate", () => {
