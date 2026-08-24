@@ -14,16 +14,13 @@
 
 export const componentStylesClearGuide = `/* === 清晰指南：学习手册 · 全局皮肤 === */
 
-/* 全局：暖纸 + 墨字，纸感用极淡渐变（不写整篇背景色） */
+/* 全局：暖纸 + 墨字。不写整篇背景色（微信整篇铺背景会出问题），底色透明 */
 #wemd {
   color: #2b2118;
   font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong", "PingFang SC", serif;
   font-size: 15px;
   line-height: 2.05;
   letter-spacing: 0.03em;
-  background-image:
-    linear-gradient(180deg, rgba(255,255,255,0.4), rgba(255,255,255,0)),
-    repeating-linear-gradient(0deg, rgba(120,90,40,0.02) 0 2px, rgba(120,90,40,0) 2px 6px);
 }
 
 /* 正文 */

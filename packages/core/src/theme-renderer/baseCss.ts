@@ -62,8 +62,9 @@ export function renderBaseCss(): string {
 #wemd .multiquote-1 {
   display: block;
   font-size: 0.9em;
-  overflow: auto;
-  overflow-scrolling: touch;
+  /* 纯文本引用块无需滚动。用 hidden 而非 auto：auto 在单行引用时
+     因 padding-right 产生亚像素纵向溢出，会误触发一条右侧滚动条。 */
+  overflow: hidden;
   padding-top: 10px;
   padding-bottom: 10px;
   padding-left: 20px;

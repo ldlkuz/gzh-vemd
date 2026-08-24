@@ -108,19 +108,24 @@ export const componentStylesSilentKeynote = `/* === 无声发布（Silent Keynot
   display: flex;
   align-items: baseline;
   gap: 12px;
-  padding: 0 0 10px;
+  padding: 0 0 12px;
   border-bottom: 1px solid ${LINE};
 }
 #wemd .wemd-sk-sec-num {
   font-family: "SF Mono", "Cascadia Code", Consolas, monospace;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   color: ${ORANGE};
   flex-shrink: 0;
+  /* 编号右侧一条细橙竖分隔，强化"章节索引"的发布会气质。
+     真实元素 border-right + 内 padding，微信安全 */
+  border-right: 1px solid ${ORANGE};
+  padding-right: 14px;
+  line-height: 1.2;
 }
 #wemd .wemd-sk-sec-body {
-  font-size: 21px;
+  font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.01em;
   color: ${TEXT};
@@ -144,10 +149,20 @@ export const componentStylesSilentKeynote = `/* === 无声发布（Silent Keynot
 }
 #wemd .wemd-sk-topline {
   display: block;
-  width: 46px;
-  height: 3px;
+  width: 96px;
+  height: 2px;
   margin: 0 auto 22px;
-  background: ${ORANGE};
+  /* 中心橙色块 + 两侧细灰线：单个元素用背景渐变实现（微信安全），
+     无需伪元素/定位。强调"发布会徽标"般精致的层次。 */
+  background-image: linear-gradient(
+    90deg,
+    ${INK_SOFT} 0,
+    ${INK_SOFT} 14px,
+    #ff4d00 14px,
+    #ff4d00 82px,
+    ${INK_SOFT} 82px,
+    ${INK_SOFT} 96px
+  );
   font-size: 0;
   line-height: 0;
   overflow: hidden;
@@ -155,10 +170,10 @@ export const componentStylesSilentKeynote = `/* === 无声发布（Silent Keynot
 #wemd .wemd-sk-eyebrow {
   font-family: "SF Mono", "Cascadia Code", Consolas, monospace;
   font-size: 12px;
-  letter-spacing: 0.4em;
+  letter-spacing: 0.42em;
   text-transform: uppercase;
   color: ${INK_SOFT};
-  margin-bottom: 18px;
+  margin: 0 0 22px;
 }
 #wemd .wemd-sk-title {
   font-size: 34px;
@@ -168,18 +183,24 @@ export const componentStylesSilentKeynote = `/* === 无声发布（Silent Keynot
   color: #f4f4f0;
 }
 #wemd .wemd-sk-sub {
-  margin-top: 14px;
+  display: inline-block;
+  margin: 22px auto 0;
+  padding: 12px 18px 0;
+  /* 标题与副标题之间一条橙色细分隔线，真实元素 border 实现（微信安全）。
+     inline-block 让宽度收缩到内容、细线贴合文字居中 */
+  border-top: 1px solid #ff4d00;
   font-size: 15px;
   letter-spacing: 0.22em;
   color: ${INK_SOFT};
 }
 #wemd .wemd-sk-cover-img {
-  margin: 26px -8px 0;
+  margin: 26px auto 0;
   border-radius: 12px;
   overflow: hidden;
 }
 #wemd .wemd-sk-cover-img img {
   display: block;
+  margin: 0 auto;
   width: 100%;
   max-height: 300px;
   object-fit: cover;
