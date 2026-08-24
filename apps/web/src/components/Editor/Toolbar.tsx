@@ -5,8 +5,6 @@ import {
   Image,
   Loader2,
   Workflow,
-  ChevronRight,
-  ChevronLeft,
   ListEnd,
   WrapText,
   LayoutTemplate,
@@ -32,7 +30,6 @@ import {
   componentTemplates,
   headingOptions,
   listOptions,
-  mermaidMoreTemplates,
   mermaidPrimaryTemplates,
   syntaxTools,
   textFormatTools,
@@ -72,7 +69,6 @@ export function Toolbar({
   const themeId = useThemeStore((s) => s.themeId);
   const customThemes = useThemeStore((s) => s.customThemes);
   const [showMermaidMenu, setShowMermaidMenu] = useState(false);
-  const [showMermaidMore, setShowMermaidMore] = useState(false);
   const [showHeadingMenu, setShowHeadingMenu] = useState(false);
   const [showListMenu, setShowListMenu] = useState(false);
   const [showComponentMenu, setShowComponentMenu] = useState(false);
@@ -82,11 +78,6 @@ export function Toolbar({
   const listMenuRef = useRef<HTMLDivElement>(null);
   const componentMenuRef = useRef<HTMLDivElement>(null);
   const syntaxMenuRef = useRef<HTMLDivElement>(null);
-  const mermaidMoreRef = useRef<HTMLDivElement>(null);
-  const mermaidSubmenuRef = useRef<HTMLDivElement>(null);
-  const [mermaidSubmenuSide, setMermaidSubmenuSide] = useState<
-    "left" | "right"
-  >("right");
   const [linkToFootnote, setLinkToFootnote] = useState(() =>
     getPublishingPreference("linkToFootnote"),
   );
@@ -124,7 +115,6 @@ export function Toolbar({
       // 关闭 Mermaid 菜单
       if (mermaidMenuRef.current && !mermaidMenuRef.current.contains(target)) {
         setShowMermaidMenu(false);
-        setShowMermaidMore(false);
       }
     };
 
@@ -148,46 +138,16 @@ export function Toolbar({
     showSyntaxMenu,
   ]);
 
-  useEffect(() => {
-    if (!showMermaidMore) return;
-
-    const updateSubmenuSide = () => {
-      const container = mermaidMoreRef.current;
-      if (!container) return;
-      const rect = container.getBoundingClientRect();
-      const spaceRight = window.innerWidth - rect.right;
-
-      const isInRightHalf = rect.left > window.innerWidth / 2;
-      const isTightSpace = spaceRight < 300;
-
-      if (isInRightHalf || isTightSpace) {
-        setMermaidSubmenuSide("left");
-      } else {
-        setMermaidSubmenuSide("right");
-      }
-    };
-
-    const rafId = requestAnimationFrame(updateSubmenuSide);
-    window.addEventListener("resize", updateSubmenuSide);
-    return () => {
-      cancelAnimationFrame(rafId);
-      window.removeEventListener("resize", updateSubmenuSide);
-    };
-  }, [showMermaidMore]);
-
   const handleMermaidInsert = (code: string) => {
     onInsert("```mermaid\n", "\n```", code);
     setShowMermaidMenu(false);
-    setShowMermaidMore(false);
   };
 
   const toggleMermaidMenu = () => {
     setShowMermaidMenu((prev) => {
       const next = !prev;
-      if (!next) {
-        setShowMermaidMore(false);
-      } else {
-        // 关闭其他菜单
+      if (next) {
+        // 打开 Mermaid 菜单时同时关闭其他菜单
         setShowHeadingMenu(false);
         setShowListMenu(false);
         setShowComponentMenu(false);
@@ -221,7 +181,6 @@ export function Toolbar({
         setShowHeadingMenu(false);
         setShowListMenu(false);
         setShowMermaidMenu(false);
-        setShowMermaidMore(false);
         setShowSyntaxMenu(false);
       }
       return next;
@@ -236,7 +195,6 @@ export function Toolbar({
         setShowHeadingMenu(false);
         setShowListMenu(false);
         setShowMermaidMenu(false);
-        setShowMermaidMore(false);
         setShowComponentMenu(false);
       }
       return next;
@@ -443,48 +401,6 @@ export function Toolbar({
                 <span>{template.label}</span>
               </button>
             ))}
-            <div className="md-toolbar-dropdown-more" ref={mermaidMoreRef}>
-              <button
-                type="button"
-                className={`md-toolbar-dropdown-item md-toolbar-dropdown-more-btn ${
-                  showMermaidMore ? "active" : ""
-                }`}
-                onClick={() => setShowMermaidMore((prev) => !prev)}
-                aria-expanded={showMermaidMore}
-              >
-                <span>查看更多</span>
-                {mermaidSubmenuSide === "left" ? (
-                  <ChevronLeft
-                    size={12}
-                    className="md-toolbar-dropdown-chevron"
-                  />
-                ) : (
-                  <ChevronRight
-                    size={12}
-                    className="md-toolbar-dropdown-chevron"
-                  />
-                )}
-              </button>
-              {showMermaidMore && (
-                <div
-                  ref={mermaidSubmenuRef}
-                  className={`md-toolbar-dropdown-submenu ${
-                    mermaidSubmenuSide === "left" ? "is-left" : ""
-                  }`}
-                >
-                  {mermaidMoreTemplates.map((template, idx) => (
-                    <button
-                      key={idx}
-                      className="md-toolbar-dropdown-item"
-                      onClick={() => handleMermaidInsert(template.code)}
-                    >
-                      <template.icon size={14} className="mr-2" />
-                      <span>{template.label}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
           </div>
         )}
       </div>

@@ -29,6 +29,7 @@ import toast from "react-hot-toast";
 import "./MarkdownEditor.css";
 import { customKeymap } from "./editorShortcuts";
 import { paragraphSelectionStyle } from "./mouseSelectionStyle";
+import { markdownComponentFade } from "./markdownComponentFade";
 import {
   WECHAT_IMAGE_MAX_SIZE_BYTES,
   formatImageSize,
@@ -85,6 +86,12 @@ export function MarkdownEditor({
   const [aiLayoutPreviewing, setAiLayoutPreviewing] = useState(false);
   // 预览撤销：记录插入预览前的原文
   const aiLayoutOriginalRef = useRef<string | null>(null);
+  // store 同步防抖：编辑器输入即时，但通过防抖批量写 store，避免每次按键
+  // 都触发全局 markdown 更新 → 预览整体重渲，大幅降低大文档输入卡顿。
+  const markdownSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const markdownSyncRef = useRef<string | null>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -129,6 +136,7 @@ export function MarkdownEditor({
           : wechatMarkdownHighlighting,
         githubLight,
         EditorView.lineWrapping,
+        markdownComponentFade(),
         paragraphSelectionStyle,
         EditorView.domEventHandlers({
           paste: (event, view) => {
@@ -213,7 +221,16 @@ export function MarkdownEditor({
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
             const newContent = update.state.doc.toString();
-            setMarkdown(newContent);
+            // 防抖写 store：编辑器始终拥有最新真实内容，仅把 store 同步降频，
+            // 缓解大文档输入时预览/订阅者每次都全量重渲导致的卡顿。
+            markdownSyncRef.current = newContent;
+            if (markdownSyncTimerRef.current) {
+              clearTimeout(markdownSyncTimerRef.current);
+            }
+            markdownSyncTimerRef.current = setTimeout(() => {
+              const value = markdownSyncRef.current;
+              if (value != null) setMarkdown(value);
+            }, 120);
           }
         }),
         EditorView.theme({
@@ -274,7 +291,8 @@ export function MarkdownEditor({
         const block = view.lineBlockAt(view.state.doc.line(lineNumber).from);
         target = clamp(block.top + (sourceLine % 1) * block.height, 0, max);
       }
-      // 停止校准：平滑滚动到目标位置，避免瞬跳
+      // 跟随：平滑滚动到目标位置，避免瞬跳的机械感。由外部 rAF 节流控制频率，
+      // 滚动跟手的同时保留过渡，停止时不至于突然一跳到头。
       scrollDOM.scrollTo({ top: target, behavior: "smooth" });
     };
 
@@ -296,6 +314,12 @@ export function MarkdownEditor({
     viewRef.current = view;
 
     return () => {
+      // 卸载前 flush 未同步的防抖内容，避免最后一次输入丢失
+      if (markdownSyncTimerRef.current) {
+        clearTimeout(markdownSyncTimerRef.current);
+        const value = markdownSyncRef.current;
+        if (value != null) setMarkdown(value);
+      }
       scrollDOM.removeEventListener("scroll", handleEditorScroll);
       onScrollSyncReady?.(null);
       view.destroy();

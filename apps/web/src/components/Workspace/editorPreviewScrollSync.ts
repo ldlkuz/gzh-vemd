@@ -67,9 +67,9 @@ export const createEditorPreviewScrollSync = (
   const cleanups: Partial<Record<ScrollSyncSource, () => void>> = {};
   // 程序化滚动静默截止时间戳（毫秒）
   const mutedUntil = new Map<ScrollSyncSource, number>();
-  let settleTimer: number | null = null;
+  let pendingSyncFrame: number | null = null;
+  let pendingSyncSource: ScrollSyncSource | null = null;
   let pendingRestoreFrame: number | null = null;
-  let pendingSource: ScrollSyncSource | null = null;
   let lastPosition: ScrollSyncPosition | null = null;
   let lastSource: ScrollSyncSource | null = null;
 
@@ -106,20 +106,19 @@ export const createEditorPreviewScrollSync = (
     targetAdapter.scrollToPosition(position);
   };
 
+  // 滚动中持续跟随：rAF 节流，每帧只取一次最新滚动位置同步到对侧。
+  // scroll 事件可能比 rAF 更频繁，通过独占的 pendingSyncFrame 保证一帧最多同步一次，
+  // 避免快速滚动时过量 syncFrom 导致的卡顿。同时解决原“停止后才校准”方案里
+  // 快速滚动后预览被瞬间拉到后段、体验割裂的问题。
   const scheduleSync = (source: ScrollSyncSource) => {
-    pendingSource = source;
-    if (pendingRestoreFrame !== null) {
-      frames.cancel(pendingRestoreFrame);
-      pendingRestoreFrame = null;
-    }
-    // 滚动仍在进行则重置计时器；停止 SETTLE_DELAY_MS 后才做一次精确同步
-    if (settleTimer !== null) timers.clearTimeout(settleTimer);
-    settleTimer = timers.setTimeout(() => {
-      settleTimer = null;
-      const sourceToSync = pendingSource;
-      pendingSource = null;
+    pendingSyncSource = source;
+    if (pendingSyncFrame !== null) return; // 本帧已有待同步任务
+    pendingSyncFrame = frames.request(() => {
+      pendingSyncFrame = null;
+      const sourceToSync = pendingSyncSource;
+      pendingSyncSource = null;
       if (sourceToSync) syncFrom(sourceToSync);
-    }, SETTLE_DELAY_MS);
+    });
   };
 
   const restoreAfterLayoutChange = () => {
@@ -127,7 +126,7 @@ export const createEditorPreviewScrollSync = (
       lastSource === "editor"
         ? (adapters.editor?.getPosition() ?? lastPosition)
         : lastPosition;
-    if (!position || settleTimer !== null || pendingRestoreFrame !== null)
+    if (!position || pendingSyncFrame !== null || pendingRestoreFrame !== null)
       return;
     pendingRestoreFrame = frames.request(() => {
       pendingRestoreFrame = null;
@@ -172,11 +171,11 @@ export const createEditorPreviewScrollSync = (
   const destroy = () => {
     cleanups.editor?.();
     cleanups.preview?.();
-    if (settleTimer !== null) timers.clearTimeout(settleTimer);
+    if (pendingSyncFrame !== null) frames.cancel(pendingSyncFrame);
     if (pendingRestoreFrame !== null) frames.cancel(pendingRestoreFrame);
-    settleTimer = null;
+    pendingSyncFrame = null;
+    pendingSyncSource = null;
     pendingRestoreFrame = null;
-    pendingSource = null;
   };
 
   return { setAdapter, destroy };

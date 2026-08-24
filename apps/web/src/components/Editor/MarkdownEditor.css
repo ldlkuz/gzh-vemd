@@ -743,3 +743,20 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ========================================
+   组件语法标记弱化（::: 组件名 / :::）
+   ======================================== */
+/* 只给控制标记片段加灰底，紧贴文字，不占整行 */
+.editor-container .cm-comp-fade-mark {
+  background-color: color-mix(in srgb, var(--bg-tertiary) 65%, transparent);
+  border-radius: 4px;
+  color: var(--text-tertiary);
+  padding: 1px 3px;
+}
+
+/* 深色模式：弱化底色加深但不至于全黑 */
+[data-ui-theme="dark"] .editor-container .cm-comp-fade-mark {
+  background-color: rgba(255, 255, 255, 0.06);
+  color: #6a6a6a;
+}

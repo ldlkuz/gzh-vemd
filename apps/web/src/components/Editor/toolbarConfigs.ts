@@ -1,5 +1,4 @@
 import {
-  Activity,
   Award,
   Binary,
   Bold,
@@ -12,7 +11,6 @@ import {
   Columns,
   Database,
   FileArchive,
-  GitGraph,
   Heading1,
   Heading2,
   Heading3,
@@ -27,11 +25,9 @@ import {
   ListOrdered,
   MessageSquareQuote,
   Minus,
-  Network,
   PieChart,
   QrCode,
   Quote,
-  Route,
   Share2,
   ShoppingCart,
   Sparkles,
@@ -95,6 +91,7 @@ export interface ComponentTemplate {
   description: string;
 }
 
+// 公众号静态呈现优先：仅保留常用静态图类型，顺序按实际使用频率从高到低
 export const mermaidPrimaryTemplates: MermaidTemplate[] = [
   {
     icon: Workflow,
@@ -104,62 +101,6 @@ export const mermaidPrimaryTemplates: MermaidTemplate[] = [
     B -- 是 --> C[执行操作]
     B -- 否 --> D[结束]
     C --> D`,
-  },
-  {
-    icon: Clock,
-    label: "时序图",
-    code: `sequenceDiagram
-    participant Alice
-    participant Bob
-    Alice->>Bob: Hello Bob, how are you?
-    Bob-->>Alice: I am good thanks!
-    Bob->>John: Hello John!`,
-  },
-  {
-    icon: Network,
-    label: "类图",
-    code: `classDiagram
-    class Animal {
-        +String name
-        +void eat()
-    }
-    class Duck {
-        +void swim()
-    }
-    Animal <|-- Duck`,
-  },
-  {
-    icon: GitGraph,
-    label: "甘特图",
-    code: `gantt
-    title 项目开发计划
-    dateFormat  YYYY-MM-DD
-    section 设计
-    需求分析       :a1, 2024-01-01, 3d
-    原型设计       :after a1, 5d
-    section 开发
-    前端开发       :2024-01-10, 10d
-    后端开发       :2024-01-10, 10d`,
-  },
-  {
-    icon: Binary,
-    label: "思维导图",
-    code: `mindmap
-  root((思维导图))
-    主题一
-      子节点 A
-      子节点 B
-    主题二
-      子节点 C`,
-  },
-  {
-    icon: PieChart,
-    label: "饼图",
-    code: `pie title 市场份额
-    "产品 A" : 40
-    "产品 B" : 30
-    "产品 C" : 20
-    "其他" : 10`,
   },
   {
     icon: ChartColumn,
@@ -179,19 +120,35 @@ export const mermaidPrimaryTemplates: MermaidTemplate[] = [
     y-axis "渗透率(%)" 0 --> 60
     line [8, 15, 30, 50]`,
   },
-];
-
-export const mermaidMoreTemplates: MermaidTemplate[] = [
   {
-    icon: Activity,
-    label: "状态图",
-    code: `stateDiagram-v2
-    [*] --> 空闲
-    空闲 --> 处理中: 触发
-    处理中 --> 完成: 成功
-    处理中 --> 失败: 异常
-    失败 --> 空闲
-    完成 --> [*]`,
+    icon: PieChart,
+    label: "饼图",
+    code: `pie title 市场份额
+    "产品 A" : 40
+    "产品 B" : 30
+    "产品 C" : 20
+    "其他" : 10`,
+  },
+  {
+    icon: Binary,
+    label: "思维导图",
+    code: `mindmap
+  root((思维导图))
+    主题一
+      子节点 A
+      子节点 B
+    主题二
+      子节点 C`,
+  },
+  {
+    icon: Clock,
+    label: "时序图",
+    code: `sequenceDiagram
+    participant Alice
+    participant Bob
+    Alice->>Bob: Hello Bob, how are you?
+    Bob-->>Alice: I am good thanks!
+    Bob->>John: Hello John!`,
   },
   {
     icon: Database,
@@ -216,17 +173,6 @@ export const mermaidMoreTemplates: MermaidTemplate[] = [
     2024-02-15 : 原型完成
     2024-03-20 : 开发完成
     2024-04-01 : 上线`,
-  },
-  {
-    icon: Route,
-    label: "用户旅程",
-    code: `journey
-    title 用户旅程
-    section 认知
-      了解产品: 5: 用户
-    section 转化
-      试用: 4: 用户
-      购买: 3: 用户`,
   },
 ];
 

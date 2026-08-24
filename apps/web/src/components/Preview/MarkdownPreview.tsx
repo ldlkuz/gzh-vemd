@@ -364,7 +364,8 @@ export function MarkdownPreview({ onScrollSyncReady }: MarkdownPreviewProps) {
           position.ratio,
         );
       }
-      // 停止校准：用平滑滚动滑到目标位置，避免瞬跳的机械感
+      // 跟随：平滑滚动到目标位置，避免瞬跳的机械感（闪现）。由外部 rAF 节流
+      // 控制调用频率，滚动跟手的同时保留过渡，不至于在停止时突然一跳到头。
       if (typeof container.scrollTo === "function") {
         container.scrollTo({ top: target, behavior: "smooth" });
       } else {

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   createEditorPreviewScrollSync,
   type ScrollSyncAdapter,
@@ -55,18 +55,8 @@ const createAdapter = (initialPosition: ScrollSyncPosition) => {
   };
 };
 
-const SETTLE_DELAY_MS = 150;
-
-describe("编辑器与预览双向滚动协调（弱同步 + 停止校准）", () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it("滚动过程中不立即同步，停止 150ms 后才把主动侧源行送到另一侧", () => {
+describe("编辑器与预览双向滚动协调（实时跟随 + rAF 节流）", () => {
+  it("滚动中经一帧 rAF 立即同步到对侧，不等停止", () => {
     const frames = createFrameQueue();
     const editor = createAdapter({ sourceLine: 12, ratio: 0.4 });
     const preview = createAdapter({ sourceLine: 2, ratio: 0.1 });
@@ -75,11 +65,10 @@ describe("编辑器与预览双向滚动协调（弱同步 + 停止校准）", (
     coordinator.setAdapter("preview", preview.adapter);
 
     editor.emitScroll();
-    // 仍在滚动，尚未到达停止校准时机
+    // 还未到 rAF 帧，先不同步
     expect(preview.adapter.scrollToPosition).not.toHaveBeenCalled();
 
-    vi.advanceTimersByTime(SETTLE_DELAY_MS);
-
+    frames.flush();
     expect(preview.adapter.scrollToPosition).toHaveBeenCalledWith({
       sourceLine: 12,
       ratio: 0.4,
@@ -87,7 +76,7 @@ describe("编辑器与预览双向滚动协调（弱同步 + 停止校准）", (
     coordinator.destroy();
   });
 
-  it("滚动持续时重置计时器，只有真正停止后才同步一次", () => {
+  it("连续滚动时同一帧内的多次 scroll 合并为一次 rAF 同步", () => {
     const frames = createFrameQueue();
     const editor = createAdapter({ sourceLine: 12, ratio: 0.4 });
     const preview = createAdapter({ sourceLine: 2, ratio: 0.1 });
@@ -96,13 +85,17 @@ describe("编辑器与预览双向滚动协调（弱同步 + 停止校准）", (
     coordinator.setAdapter("preview", preview.adapter);
 
     editor.emitScroll();
-    vi.advanceTimersByTime(100);
-    editor.emitScroll(); // 继续滚动，重置计时
-    vi.advanceTimersByTime(100);
+    editor.setPosition({ sourceLine: 20, ratio: 0.7 }); // 同一帧内滚动继续推进
+    editor.emitScroll();
     expect(preview.adapter.scrollToPosition).not.toHaveBeenCalled();
 
-    vi.advanceTimersByTime(SETTLE_DELAY_MS);
+    frames.flush();
+    // 取最新位置同步一次
     expect(preview.adapter.scrollToPosition).toHaveBeenCalledTimes(1);
+    expect(preview.adapter.scrollToPosition).toHaveBeenCalledWith({
+      sourceLine: 20,
+      ratio: 0.7,
+    });
     coordinator.destroy();
   });
 
@@ -115,10 +108,10 @@ describe("编辑器与预览双向滚动协调（弱同步 + 停止校准）", (
     coordinator.setAdapter("preview", preview.adapter);
 
     editor.emitScroll();
-    vi.advanceTimersByTime(SETTLE_DELAY_MS);
-    // 程序化滚动使 preview 进入静默期，其反向 scroll 事件应被忽略
+    frames.flush(); // 同步后 preview 进入程序化滚动静默期
+    // preview 反向 scroll 事件应被忽略
     preview.emitScroll();
-    vi.advanceTimersByTime(SETTLE_DELAY_MS);
+    frames.flush();
     expect(editor.adapter.scrollToPosition).not.toHaveBeenCalled();
 
     editor.setPosition({ sourceLine: 22, ratio: 0.7 });
@@ -140,10 +133,10 @@ describe("编辑器与预览双向滚动协调（弱同步 + 停止校准）", (
     coordinator.setAdapter("preview", preview.adapter);
 
     editor.emitScroll();
-    vi.advanceTimersByTime(SETTLE_DELAY_MS);
+    frames.flush();
     preview.emitUserIntent();
     preview.emitScroll();
-    vi.advanceTimersByTime(SETTLE_DELAY_MS);
+    frames.flush();
 
     expect(editor.adapter.scrollToPosition).toHaveBeenLastCalledWith({
       sourceLine: 4,
@@ -161,11 +154,11 @@ describe("编辑器与预览双向滚动协调（弱同步 + 停止校准）", (
     coordinator.setAdapter("preview", preview.adapter);
 
     editor.emitScroll();
-    vi.advanceTimersByTime(SETTLE_DELAY_MS);
+    frames.flush();
     preview.emitLayoutChange();
     preview.emitUserIntent();
     preview.emitScroll();
-    vi.advanceTimersByTime(SETTLE_DELAY_MS);
+    frames.flush();
 
     expect(editor.adapter.scrollToPosition).toHaveBeenLastCalledWith({
       sourceLine: 4,
