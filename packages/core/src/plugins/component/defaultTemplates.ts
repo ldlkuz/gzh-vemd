@@ -36,12 +36,14 @@ const CURATED: Record<string, string> = {
 
   "two-column-cards": [
     '<section class="wemd-component wemd-two-column-cards" data-component="two-column-cards">',
-    '<section class="wemd-tcc-wrapper">',
+    '<section class="wemd-vc-list">',
     "{{#each items}}",
-    '<section class="wemd-tcc-item">',
-    '<section class="wemd-tcc-icon">{{this.icon}}</section>',
-    '<section class="wemd-tcc-title">{{this.title}}</section>',
-    '<section class="wemd-tcc-desc">{{this.desc}}</section>',
+    '<section class="wemd-vc-item">',
+    '<span class="wemd-vc-stripe">&nbsp;</span>',
+    '<section class="wemd-vc-body">',
+    '<section class="wemd-vc-title">{{this.title}}</section>',
+    '<section class="wemd-vc-desc">{{this.desc}}</section>',
+    "</section>",
     "</section>",
     "{{/each}}",
     "</section>",
@@ -65,6 +67,7 @@ const CURATED: Record<string, string> = {
     '<section class="wemd-component wemd-end-card" data-component="end-card">',
     '{{#if title}}<section class="wemd-ec-title">{{slot:title}}</section>{{/if}}',
     '{{#if subtitle}}<section class="wemd-ec-subtitle">{{slot:subtitle}}</section>{{/if}}',
+    '{{#if body}}<section class="wemd-ec-body">{{slot:body}}</section>{{/if}}',
     '{{#if deco}}<section class="wemd-ec-deco">{{slot:deco}}</section>{{/if}}',
     "</section>",
   ].join("\n"),
@@ -247,6 +250,15 @@ const CURATED: Record<string, string> = {
   accordion: [
     '<section class="wemd-component wemd-accordion" data-component="accordion">',
     '<div class="wemd-component-body">{{slot:body}}</div>',
+    "</section>",
+  ].join("\n"),
+
+  // table：通用骨架会生成未样式化的 `.wemd-tbl-table`，但基础 CSS 契约是
+  // `.wemd-table .wemd-component-body .table-container table`（components-extended.ts）。
+  // 这里补精编骨架套 `.wemd-component-body` 包裹层，内容经 slot:table 渲染出 `.table-container`。
+  table: [
+    '<section class="wemd-component wemd-table" data-component="table">',
+    '<div class="wemd-component-body">{{slot:table}}</div>',
     "</section>",
   ].join("\n"),
 };
