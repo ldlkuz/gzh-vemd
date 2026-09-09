@@ -30,18 +30,21 @@
 ## 二、规则与检查点
 
 > 本套主题改造沉淀的条目分两类：
+>
 > - **硬约束（必须遵守）**：技术/微信层面的硬性限制，违反会坏（特异性、无伪元素、
 >   不设整篇背景、两链路一致）。
 > - **检查点（设计自由，仅验收时核查）**：配色、装饰色等属于组件/主题的设计决策，
 >   方法论不规定做法，只要求验收时检查可读性与一致性。
 
 ### 1. 皮肤覆盖共享组件时，选择器必须「同路径 · 同特异性」（硬约束）
+
 - 共享规则常写 `#wemd .wemd-magazine-cover .wemd-mc-title`（1 ID + 2 class，特异性 0,1,2,0）。
 - 主题皮肤若写 `#wemd .wemd-mc-title`（0,1,1,0），**特异性更低** → 内联导出时被共享覆盖，皮肤不生效。
 - ✅ 正确：写完整路径 `#wemd .wemd-magazine-cover .wemd-mc-title`（同特异性、源码在后 → 覆盖）。
 - ⚠️ 排查信号：改了皮肤但导出样式没变化，先查选择器是否少写了一层容器 class。
 
 ### 2. 底色 / 深色配色的检查点（颜色冲撞）（检查点）
+
 - 是否用整块底色、用浅底还是深底、深底上配什么字色，**都是组件 / 主题自己的设计决策**，
   不在此写死做法。
 - 只需在验收时检查一个关注点：**前景与背景是否可读、颜色是否冲突**。
@@ -52,11 +55,13 @@
   **是去底色、还是强制浅字、还是保留深底，由组件设计决定**，方法论只提示检查。
 
 ### 3. #wemd 不设整篇背景（硬约束）
+
 - 项目约束：`#wemd` 不写 `background-color` / 整篇背景图（微信编辑器会设底色）。
 - 背景交给公众号编辑器，结构靠组件边框线表达。
 - ⚠️ 排查信号：整篇蓝底 / 浅色底 → 检查 `#wemd` 的 `background-image` / `background-color`。
 
 ### 4. 装饰一律真实 DOM，无伪元素（硬约束）
+
 - 皮肤 / 骨架里**不要写 `::before` / `::after`** 做装饰。
 - 结构伪类（`:nth-child` / `:first-child` / `:last-child` / `:not()`）同样禁用。
 - 需要装饰（竖条、光边、序号、图标）时：**在骨架里放真实 `<span>`**
@@ -67,6 +72,7 @@
   预览/导出不一致或双条叠加。
 
 ### 5. 装饰色是组件设计的一部分，是否跟随主题由组件决定（检查点）
+
 - 组件装饰色（如 callout 竖条用 type 语义色 info/success/warning/danger/tip，
   或跟随主题主色 `var(--wemd-primary)`）**属于组件自身设计**，不在此一刀切。
 - 选「跟随主题」还是「固定语义色」，取决于组件想表达什么：
@@ -75,6 +81,7 @@
 - 方法论只要求：**预览与导出两条链路表现一致**，且颜色不与背景冲突（见第 2 条）。
 
 ### 6. 注意「预览」与「导出」两条链路的差异（硬约束）
+
 - **预览**走浏览器 CSS 级联（`<style>` + 特异性），**导出**走内联（`inlineAllStylesManually`
   按特异性排序）+ 伪元素物化（`pseudoElementInline`）。
 - 同一问题可能在预览正常、导出异常（或反之）。验证时**两条链路都要测**：
@@ -84,11 +91,13 @@
   导出靠物化器。只修一条链路会「预览正常导出紫 / 导出正常预览紫」。
 
 ### 7. 明确哪些组件「保持默认」（硬约束）
+
 - 不是每个组件都要定制。明确清单（如 code-frame 保持默认骨架 + 默认皮肤），
   皮肤里**不要**覆盖它，避免引入意外样式。
 - 测试里加一条「未定制组件无主题污染」断言（如 `not.toContain("wemd-db-")`）。
 
 ### 8. 主题级扩展槽（slotDefs）—— 让骨架消费共享槽位之外的额外内容（硬约束）
+
 - **背景**：共享 `slotDefs.ts` 决定了组件能"看到"什么内容（骨架里 `{{slot:key}}`
   只能取到共享解析产出的槽）。主题想要额外内容（封面图、作者、日期、编号拆分）时，
   改全局 slotDefs 会影响所有主题。
@@ -106,15 +115,17 @@
   扩展槽写在独立文件 `themes/slotDefs-<id>.ts`。
 
 ### 9. 编号拆分（source:"number-prefix"）—— 行首编号单独着色（检查点）
+
 - 共享 `slotParsers.ts` 新增 `number-prefix` source：从 h2 行首提取编号（如
   `## 01 引言` → `01`），**剥离 `##` 标记**并把剩余文本替换回原行供
   `body(paragraph)` 渲染；不标记 consumed（避免 `takeParagraphs` 因行已消费而跳过）。
 - 骨架：`{{#if part}}<span class="wemd-…-num">{{slot:part}}</span>{{/if}}`
-  + `<span class="wemd-…-body">{{slot:body}}</span>`，编号单独着色。
+  - `<span class="wemd-…-body">{{slot:body}}</span>`，编号单独着色。
 - 无编号标题自动降级：`part` 为空 → 只渲染 body。
 - 只有声明该 source 的扩展槽才生效，共享行为不变。
 
 ### 10. SVG / base64 装饰素材（检查点）
+
 - **背景**：项目默认"装饰优先 CSS 代码表达"。**绝大多数视觉（波形、引号、图标、
   环形、纹理）都能用 CSS 渐变 / 边框 / conic-gradient 表达，优先用 CSS**；
   仅当图形复杂度确实超出 CSS 表达力时，才引入 SVG / base64 素材（需接受微信兼容不确定性）。
@@ -137,14 +148,14 @@
 
 ## 三、需要新建/修改的文件（清单）
 
-| 文件 | 作用 |
-|---|---|
-| `packages/core/src/themes/templates-<id>.ts` | 主题独立骨架（仅差异组件） |
-| `packages/core/src/themes/slotDefs-<id>.ts` | 主题级扩展槽（需额外内容时，如封面图 / 编号拆分） |
-| `packages/core/src/themes/components-<id>.ts` | 主题皮肤（全局 + 组件级） |
-| `packages/core/src/theme-renderer/index.ts` | `BUILTIN_THEME_COMPONENT_STYLES` 注册皮肤；`getThemeSlotDefs` 已由渲染链统一注入 |
-| `packages/core/src/builtin-themes/index.ts` | 新增 `theme<Id>` 定义（含 `slotDefs`）+ 加入数组 |
-| `packages/core/src/__tests__/defaultThemeDomMatch.test.ts` | 追加主题专属回归测试块 |
+| 文件                                                       | 作用                                                                             |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `packages/core/src/themes/templates-<id>.ts`               | 主题独立骨架（仅差异组件）                                                       |
+| `packages/core/src/themes/slotDefs-<id>.ts`                | 主题级扩展槽（需额外内容时，如封面图 / 编号拆分）                                |
+| `packages/core/src/themes/components-<id>.ts`              | 主题皮肤（全局 + 组件级）                                                        |
+| `packages/core/src/theme-renderer/index.ts`                | `BUILTIN_THEME_COMPONENT_STYLES` 注册皮肤；`getThemeSlotDefs` 已由渲染链统一注入 |
+| `packages/core/src/builtin-themes/index.ts`                | 新增 `theme<Id>` 定义（含 `slotDefs`）+ 加入数组                                 |
+| `packages/core/src/__tests__/defaultThemeDomMatch.test.ts` | 追加主题专属回归测试块                                                           |
 
 > 若骨架结构被多主题复用，可抽到 `themes/template-library.ts`（本次按需，未强制）。
 
@@ -173,21 +184,21 @@
 
 ## 五、本次踩坑速查表（下次直接对照）
 
-| 症状 | 根因 | 修法 |
-|---|---|---|
-| 改了皮肤但导出不变 | 选择器少一层容器 class，特异性低于共享 | 写完整路径 `#wemd .<容器> .<子元素>` |
-| 深色背景 + 深色字不可读 | 深色卡沿用了共享 `var(--wemd-text-normal)` 深色字 | 按组件设计决定：深色卡改浅字，或改浅底 |
-| 整篇浅蓝/浅色底 | `#wemd` 写了 background-image/color | 改为 `background-image: none`，交给编辑器 |
-| 正文卡片有整块底色且不可读 | 共享默认给正文类用 `var(--wemd-bg-card)`（token 为深色时深底深字） | 按设计决定：去底色 or 浅底 or 配浅字 |
-| callout 竖条颜色与主题/背景冲突 | 竖条用 type 固定色（或主题色）与卡片配色打架 | 由组件设计定色；验收检查前景/背景可读 |
-| 预览正常导出异常（或反之） | 预览走级联、导出走内联+物化，两条链路 | 两链路都验证 |
-| 主题代码改了但页面不变 | `@wemd/core` 走 dist 而非 src | 确认 vite alias 指向 src，或重启 dev |
-| 封面/收场槽位颠倒（eyebrow 变大标题、大标题变小字） | 共享解析 title=首行 / subtitle=次行，用户范文按"eyebrow 第一行（斜体）+ 大标题第二行（粗体）"写 | 骨架反转使用槽位：eyebrow←`{{slot:title}}`、大标题←`{{slot:subtitle}}`（无声发布已踩） |
-| 封面/收场内 strong/em 变主题橙 | 全局 `#wemd em` / `p strong` 规则内联染色 | 封面内 `strong, em { color: inherit }` 继承封面色 |
-| styled-table 皮肤不生效（走了默认橙底表头） | 导出结构是 `.wemd-sbt-table`，非 `.wemd-component-body` | 皮肤用通用选择器 `.wemd-styled-table th/td`（后代选择，两种结构都命中） |
-| 扩展槽内容被共享槽吞掉（如封面图提取不到） | 扩展槽排在共享 `desc`(paragraph many) 之后解析，图片行已被消费 | `mergeSlotOverrides` 让扩展槽**排在共享槽之前**解析（机制已内置，勿回退） |
-| CSS `background` 内联 data URL 被拆散（`url("data:...;base64,...")` 里的分号截断） | `inlineAllStylesManually` 用 `split(";")` 简单切分声明，data URL 内 `;` 被当分隔符 | 已修：`ThemeProcessor.splitCssDeclarations` 跳过 `url(...)` 内分号（数据主题纸纹背景曾依赖） |
-| SVG 元素 CSS 颜色（`stroke`/`fill` via CSS）内联导出不生效 | SVG 元素 `color`/`stroke` 的 CSS 规则未被内联 | 骨架里 SVG 装饰直接写 SVG 属性颜色（`stroke="#xxx"`），不依赖 CSS（曾踩） |
+| 症状                                                                               | 根因                                                                                            | 修法                                                                                                                                  |
+| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| 改了皮肤但导出不变                                                                 | 选择器少一层容器 class，特异性低于共享                                                          | 写完整路径 `#wemd .<容器> .<子元素>`                                                                                                  |
+| 深色背景 + 深色字不可读                                                            | 深色卡沿用了共享 `var(--wemd-text-normal)` 深色字                                               | 按组件设计决定：深色卡改浅字，或改浅底；具体案例见 theme-development-guide #14（深底正文需连 `.X p` 覆盖，避免被全局 `#wemd p` 染深） |
+| 整篇浅蓝/浅色底                                                                    | `#wemd` 写了 background-image/color                                                             | 改为 `background-image: none`，交给编辑器                                                                                             |
+| 正文卡片有整块底色且不可读                                                         | 共享默认给正文类用 `var(--wemd-bg-card)`（token 为深色时深底深字）                              | 按设计决定：去底色 or 浅底 or 配浅字                                                                                                  |
+| callout 竖条颜色与主题/背景冲突                                                    | 竖条用 type 固定色（或主题色）与卡片配色打架                                                    | 由组件设计定色；验收检查前景/背景可读                                                                                                 |
+| 预览正常导出异常（或反之）                                                         | 预览走级联、导出走内联+物化，两条链路                                                           | 两链路都验证                                                                                                                          |
+| 主题代码改了但页面不变                                                             | `@wemd/core` 走 dist 而非 src                                                                   | 确认 vite alias 指向 src，或重启 dev                                                                                                  |
+| 封面/收场槽位颠倒（eyebrow 变大标题、大标题变小字）                                | 共享解析 title=首行 / subtitle=次行，用户范文按"eyebrow 第一行（斜体）+ 大标题第二行（粗体）"写 | 骨架反转使用槽位：eyebrow←`{{slot:title}}`、大标题←`{{slot:subtitle}}`（无声发布已踩）                                                |
+| 封面/收场内 strong/em 变主题橙                                                     | 全局 `#wemd em` / `p strong` 规则内联染色                                                       | 封面内 `strong, em { color: inherit }` 继承封面色                                                                                     |
+| styled-table 皮肤不生效（走了默认橙底表头）                                        | 导出结构是 `.wemd-sbt-table`，非 `.wemd-component-body`                                         | 皮肤用通用选择器 `.wemd-styled-table th/td`（后代选择，两种结构都命中）                                                               |
+| 扩展槽内容被共享槽吞掉（如封面图提取不到）                                         | 扩展槽排在共享 `desc`(paragraph many) 之后解析，图片行已被消费                                  | `mergeSlotOverrides` 让扩展槽**排在共享槽之前**解析（机制已内置，勿回退）                                                             |
+| CSS `background` 内联 data URL 被拆散（`url("data:...;base64,...")` 里的分号截断） | `inlineAllStylesManually` 用 `split(";")` 简单切分声明，data URL 内 `;` 被当分隔符              | 已修：`ThemeProcessor.splitCssDeclarations` 跳过 `url(...)` 内分号（数据主题纸纹背景曾依赖）                                          |
+| SVG 元素 CSS 颜色（`stroke`/`fill` via CSS）内联导出不生效                         | SVG 元素 `color`/`stroke` 的 CSS 规则未被内联                                                   | 骨架里 SVG 装饰直接写 SVG 属性颜色（`stroke="#xxx"`），不依赖 CSS（曾踩）                                                             |
 
 ---
 

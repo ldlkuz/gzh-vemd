@@ -21,6 +21,7 @@
 11. [双色直角装饰用纯边框而非多段背景渐变（内联导出会退化）](#11-双色直角装饰用纯边框而非多段背景渐变)
 12. [整篇网格/纸纹背景在微信整篇铺网格（#wemd 不设 background）](#12-整篇网格纸纹背景在微信整篇铺网格)
 13. [steps 序号覆盖必须写全盒尺寸（否则物化 span 丢尺寸变裸数字）](#13-steps-序号覆盖必须写全盒尺寸)
+14. [深色结束卡正文被全局 #wemd p 染深（覆盖必须连 p 双选择器）](#14-深色结束卡正文被全局-wemd-p-染深)
 
 ---
 
@@ -566,6 +567,48 @@
 
 ---
 
+## 14. 深色结束卡正文被全局 #wemd p 染深
+
+**现象**
+
+- 莫兰迪森林 / 落日胶片 / 无声发布 / 学术论文 / 知识档案 / 鎏金 / 现代编辑等主题的**深色 `end-card`**（深绿 / 深紫黑 / 深咖 / 深藏蓝底）里，标题（如「写在最后」）浅色正常，但正文段落却是**深色/黑色**，深底深字看不清。
+
+**根因**
+
+- 深色卡片容器只在**容器元素**上设了浅色字（如 `.wemd-end-card { color: #f7ead8 }`），依赖继承。
+- 但皮肤里有全局段落规则 `#wemd p { color: #333 }`，它**直接声明在 `<p>` 元素上**，优先级压过继承——正文 `<p>` 一定被染成深色，与卡片容器背景深浅无关。
+- 只覆盖 `.wemd-end-card .wemd-ec-body`（section）的 color **无效**：该规则作用于 section，段落 `<p>` 仍被全局 `#wemd p` 直接声明染深。
+
+**修复**
+
+- 浅色正文覆盖必须**连 `<p>` 一起命中**（双选择器 + 同级），`strong` 用同一浅色调强调：
+  ```css
+  #wemd .wemd-end-card .wemd-ec-body,
+  #wemd .wemd-end-card .wemd-ec-body p {
+    color: #dfe6d2;
+  }
+  #wemd .wemd-end-card .wemd-ec-body strong {
+    color: #f6f4ec;
+  }
+  ```
+- 共享 base（`components-magazine.ts`）的 `.wemd-ec-body` 也补 `p` 兜底：浅色主题无感、深色主题一处覆盖即生效。
+
+**涉及文件**
+
+- `packages/core/src/themes/components-{morandi-forest,sunset-film,silent-keynote,academic-paper,knowledge-base,luxury-gold,modern-editorial}.ts`
+- `packages/core/src/themes/components-magazine.ts`（共享 base 补 p 兜底）
+
+**验证**
+
+- happy-dom / `getComputedStyle` 断言 end-card 内 `<p>` 计算色为浅色、非全局深色值。
+
+**通用结论**
+
+- 深色卡片容器设浅字时，**必须同时覆盖容器内的 `<p>`**（写 `, .X p`），否则被全局 `#wemd p { color: 深 }` 直接声明压死。凡是"深底卡片"的正文规则都要带 `p` 双选择器。
+- 排查：先搜皮肤里 `#wemd p { color:` 的全局段落色值，再核对每个深色卡片（end-card / cover / callout 深版）是否覆写了 `, .X p`。
+
+---
+
 ## 排查速查表
 
 | 现象                                     | 首查                                                                                        |
@@ -581,6 +624,7 @@
 | 双色直角装饰变成两个点                   | 是否用多段 `background-image` 渐变（内联导出跨行/注释退化）→ 改纯四边双色边框               |
 | 整篇出现网格/纸纹底                      | `#wemd` 是否设了 background（应不设，纸纹只做卡片局部）                                     |
 | steps 序号偏小/偏下不像圆标              | 覆盖 `li::before` 是否只写了颜色（物化 span 丢盒尺寸）→ 写全 width/height/line-height/color |
+| 深色结束卡/封面标题正常但正文发黑        | 是否只覆盖了容器 `.X { color: 浅 }`（继承被全局 `#wemd p` 压掉）→ 必须写 `, .X p` 双选择器  |
 
 ---
 
