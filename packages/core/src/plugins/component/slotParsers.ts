@@ -11,7 +11,12 @@
  * 输出：分槽结果（SlotContent），值为已渲染的 HTML 片段；list 槽为条目数组
  */
 import type MarkdownIt from "markdown-it";
-import type { ComponentSlotDef, ListItem, SlotContent, SlotDef } from "./slotTypes";
+import type {
+  ComponentSlotDef,
+  ListItem,
+  SlotContent,
+  SlotDef,
+} from "./slotTypes";
 import { getBuiltinSlotDef, getFallbackSlotDef } from "./slotDefs";
 import { setNativeLayerDisabled } from "../markdown-it-native-layer";
 import highlightjs from "../../utils/langHighlight";
@@ -240,6 +245,7 @@ function takeLinesByPosition(
     position?: "first" | "last" | "any";
     cardinality?: "one" | "optional" | "many";
     maxChars?: number;
+    rejectPunct?: boolean;
   },
   consumed: Set<number>,
 ): string | undefined {
@@ -255,6 +261,10 @@ function takeLinesByPosition(
     // 可选最大字数：超长行不匹配（如 end-card 的 heading 只认「后记」这类短行，
     // 不吞长正文；无标题时正文仍留给 subtitle，避免被渲染成大标题）
     if (rule.maxChars !== undefined && lines[i].trim().length > rule.maxChars) {
+      continue;
+    }
+    // 仅装饰/元信息行：含中文句读的普通句子不匹配，避免正文短句被当装饰尾标吞掉
+    if (rule.rejectPunct && /[。，！？；]/.test(lines[i])) {
       continue;
     }
     idxs.push(i);
@@ -445,10 +455,26 @@ function takeImageUrl(
   return escapeHtmlAttr(m[2]);
 }
 
-/**
- * 取列表：把未消费行按 markdown 列表项分组，返回条目数组。
- * 有 item_slots 时按行位置映射字段；无则每项一个 body 字段。
- */
+/** 列表项字段净化：含粗体剥掉所有 ** 标记取纯文本（value/title/时间标签等展示字段语义），其余走行内渲染 */
+function cleanField(markdownParser: MarkdownIt, part: string): string {
+  return part.includes("**")
+    ? part.replace(/\*\*/g, "")
+    : renderInline(markdownParser, part);
+}
+
+/** 单行多字段列表项按分隔符拆开（· • ：，用于「标题 · 描述」这类紧凑写法）；无法拆分返回 null */
+function splitInlineFields(line: string, count: number): string[] | null {
+  if (count < 2) return null;
+  const t = line.trim();
+  if (!t) return null;
+  const sep = t.search(/[·•：:]/);
+  if (sep < 0) return null;
+  const before = t.slice(0, sep).trim();
+  const after = t.slice(sep + 1).trim();
+  if (!before) return null;
+  return [before, after];
+}
+
 function takeListItems(
   markdownParser: MarkdownIt,
   lines: string[],
@@ -465,14 +491,20 @@ function takeListItems(
     const fields =
       itemSlots && itemSlots.length ? itemSlots : [{ key: "body" }];
     const item: ListItem = {};
-    fields.forEach((f, idx) => {
-      const part = raw[idx] ?? "";
-      // 列表项字段含粗体时剥掉所有 ** 标记取纯文本（value/title/时间标签等展示字段语义）
-      // 避免原实现只替换第一个 ** 导致部分粗体残留未闭合标记
-      item[f.key] = part.includes("**")
-        ? part.replace(/\*\*/g, "")
-        : renderInline(markdownParser, part);
-    });
+    // 多字段列表项：若整项仅一行，优先按分隔符拆开（如 two-column-cards 的
+    // 「标题 · 描述」紧凑写法），否则按行位置映射到各字段。
+    if (fields.length > 1 && raw.length === 1 && raw[0]) {
+      const seg = splitInlineFields(raw[0], fields.length);
+      fields.forEach((f, idx) => {
+        const part = seg ? (seg[idx] ?? "") : (raw[idx] ?? "");
+        item[f.key] = cleanField(markdownParser, part);
+      });
+    } else {
+      fields.forEach((f, idx) => {
+        const part = raw[idx] ?? "";
+        item[f.key] = cleanField(markdownParser, part);
+      });
+    }
     items.push(item);
     current = [];
     for (const i of currentIdx) consumed.add(i);
@@ -1405,8 +1437,7 @@ function parseStatsBlock(parser: MarkdownIt, raw: string): SlotContent {
   // 首段若为「单行纯文字」→ 作为标题（数据对的加粗首行不算标题）
   if (paragraphs.length) {
     const first = paragraphs[0];
-    const isSinglePlain =
-      first.length === 1 && !lines[first[0]].includes("**");
+    const isSinglePlain = first.length === 1 && !lines[first[0]].includes("**");
     if (isSinglePlain) {
       result.title = renderInline(parser, lines[first[0]]);
       cursor = 1;
@@ -1425,9 +1456,7 @@ function parseStatsBlock(parser: MarkdownIt, raw: string): SlotContent {
       items.push({
         value: group[boldIdx].replace(/\*\*/g, "").trim(),
         label:
-          nonBold !== -1
-            ? renderInline(parser, group[nonBold]).trim()
-            : "",
+          nonBold !== -1 ? renderInline(parser, group[nonBold]).trim() : "",
       });
     } else {
       items.push({

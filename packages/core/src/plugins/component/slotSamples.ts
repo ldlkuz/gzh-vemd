@@ -120,12 +120,30 @@ function sampleForSlot(componentId: string, slot: SlotDef): string | undefined {
     case "block":
       return override ?? "这里是正文段落，写一句话说明内容。";
     case "list": {
-      const title = slot.item_slots?.find((f) => f.key === "title");
-      const desc = slot.item_slots?.find((f) => f.key === "desc");
-      const item = title
+      const fields = slot.item_slots ?? [];
+      // 多项字段（如 two-column-cards 的 icon/title/desc）必须一行一个字段，
+      // 解析器按行位置映射；单字段列表沿用单行样式。
+      if (fields.length > 1) {
+        const itemLines = fields.map((f) => {
+          const label = f.semantic || f.key;
+          if (f.key === "title") return `**${label}**`;
+          // 图标字段无语义占位，用中性符号避免预览里出现文字图标
+          if (f.key === "icon") return "⭐";
+          return label;
+        });
+        const item = itemLines
+          .map((l, i) => (i === 0 ? `- ${l}` : `  ${l}`))
+          .join("\n");
+        return `${item}\n${item}`;
+      }
+      const first = fields[0];
+      const title =
+        first?.key === "title" ? first : fields.find((f) => f.key === "title");
+      const desc = fields.find((f) => f.key === "desc");
+      const single = title
         ? `**${title.semantic}**${desc ? ` · ${desc.semantic}` : ""}`
-        : "条目一";
-      return `- ${item}\n- ${item}`;
+        : (first?.semantic ?? "条目一");
+      return `- ${single}\n- ${single}`;
     }
     case "first-char":
     case "hr":

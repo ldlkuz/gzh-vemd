@@ -41,6 +41,9 @@ export interface SlotInputRule {
   /** 最大字符数：超出该长度的行不匹配（用于"只认短行"的槽，
    *  如 end-card 的 heading 只认「后记」这类短标题，不吞长正文） */
   maxChars?: number;
+  /** 仅装饰/元信息行：含中文句读（。，！？；）的行一律不匹配，
+   *  用于把不经意的正文短句与真正的装饰尾标区分开 */
+  rejectPunct?: boolean;
 }
 
 /** 单个 Slot 定义 */

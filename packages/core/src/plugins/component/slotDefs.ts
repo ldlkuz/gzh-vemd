@@ -76,11 +76,10 @@ export const BUILTIN_SLOT_DEFS: ComponentSlotDef[] = [
       {
         key: "items",
         type: "list",
-        semantic: "两栏卡片列表",
+        semantic: "单列特性卡片列表",
         required: true,
         input: { source: "list", cardinality: "many" },
         item_slots: [
-          { key: "icon", type: "text", semantic: "图标" },
           { key: "title", type: "text", semantic: "标题" },
           { key: "desc", type: "text", semantic: "描述" },
         ],
@@ -141,13 +140,25 @@ export const BUILTIN_SLOT_DEFS: ComponentSlotDef[] = [
           source: "first-line",
           position: "any",
           cardinality: "optional",
+          // 只认短副标（≤30 字符）；超长的句子不吞，留给 body 兜底渲染为可读正文，
+          // 避免整段结语副标被降格成小号灰字。
+          maxChars: 30,
         },
       },
       {
         key: "deco",
         type: "decorative",
-        semantic: "装饰元素",
-        input: { source: "paragraph", cardinality: "optional" },
+        semantic: "装饰尾标（≤40字短尾，正文留段落）",
+        input: {
+          source: "last-line",
+          cardinality: "optional",
+          // 只认较短装饰尾标（≤40 字符，如 🍃、「编辑：xxx」、胶卷盘的「REEL 019 · 35MM」
+          // meta）；过长正文不匹配，留给 body 兜底，杜绝多段正文被装饰槽吞掉。
+          maxChars: 40,
+          // 真正的装饰/meta 行不含中文句读；含 。，！？；的行是正经正文句子，
+          // 即使 ≤40 字也不当作尾标（修复 31~40 字正文短句被误吞进 deco 导致丢失）。
+          rejectPunct: true,
+        },
       },
     ],
   },
@@ -254,7 +265,11 @@ export const BUILTIN_SLOT_DEFS: ComponentSlotDef[] = [
         key: "title",
         type: "text",
         semantic: "标题",
-        input: { source: "first-line", position: "first", cardinality: "optional" },
+        input: {
+          source: "first-line",
+          position: "first",
+          cardinality: "optional",
+        },
       },
       {
         key: "items",

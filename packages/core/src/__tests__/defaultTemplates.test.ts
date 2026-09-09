@@ -57,14 +57,14 @@ describe("defaultTemplates 渲染", () => {
     expect(html).toContain("描述第二段");
   });
 
-  it("two-column-cards：each 遍历条目", () => {
+  it("two-column-cards：each 遍历条目（单列 vc）", () => {
     const data = parseComponentSlots(
       parser(),
       "two-column-cards",
-      "- 🚀\n  **标题A**\n  描述A\n- 🎨\n  **标题B**\n  描述B",
+      "- **标题A**\n  描述A\n- **标题B**\n  描述B",
     );
     const html = fillTemplate(getDefaultTemplate("two-column-cards"), data);
-    expect((html.match(/wemd-tcc-item">/g) ?? []).length).toBe(2);
+    expect((html.match(/wemd-vc-item">/g) ?? []).length).toBe(2);
     expect(html).toContain("标题A");
     expect(html).toContain("描述B");
   });

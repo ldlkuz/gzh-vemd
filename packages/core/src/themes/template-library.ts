@@ -81,6 +81,7 @@ export const endCardSeal = (sealText: string): string =>
     '<section class="wemd-component wemd-end-card" data-component="end-card">',
     '{{#if title}}<section class="wemd-ec-title">{{slot:title}}</section>{{/if}}',
     '{{#if subtitle}}<section class="wemd-ec-subtitle">{{slot:subtitle}}</section>{{/if}}',
+    '{{#if body}}<section class="wemd-ec-body">{{slot:body}}</section>{{/if}}',
     `<span class="wemd-ec-seal">${sealText}</span>`,
     "</section>",
   ].join("\n");

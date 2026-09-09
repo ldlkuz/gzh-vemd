@@ -101,7 +101,7 @@ const SECTION_DIVIDER: ComponentElementsDef = {
 
 const TWO_COLUMN_CARDS: ComponentElementsDef = {
   type: "two-column-cards",
-  label: "两栏卡片",
+  label: "单列特性卡片",
   hasBody: false,
   containerSelector: ".wemd-two-column-cards",
   containerDesc: "组件容器",
@@ -112,29 +112,34 @@ const TWO_COLUMN_CARDS: ComponentElementsDef = {
       wemdSelector: ".wemd-two-column-cards",
     },
     {
-      name: "wrapper",
-      desc: "两栏外层容器",
-      wemdSelector: ".wemd-two-column-cards .wemd-tcc-wrapper",
+      name: "list",
+      desc: "卡片列表容器",
+      wemdSelector: ".wemd-two-column-cards .wemd-vc-list",
     },
     {
       name: "item",
       desc: "单个卡片项",
-      wemdSelector: ".wemd-two-column-cards .wemd-tcc-item",
+      wemdSelector: ".wemd-two-column-cards .wemd-vc-item",
     },
     {
-      name: "icon",
-      desc: "卡片图标",
-      wemdSelector: ".wemd-two-column-cards .wemd-tcc-icon",
+      name: "stripe",
+      desc: "左侧强调色带",
+      wemdSelector: ".wemd-two-column-cards .wemd-vc-stripe",
+    },
+    {
+      name: "body",
+      desc: "卡片内容区",
+      wemdSelector: ".wemd-two-column-cards .wemd-vc-body",
     },
     {
       name: "title",
       desc: "卡片标题",
-      wemdSelector: ".wemd-two-column-cards .wemd-tcc-title",
+      wemdSelector: ".wemd-two-column-cards .wemd-vc-title",
     },
     {
       name: "desc",
       desc: "卡片描述",
-      wemdSelector: ".wemd-two-column-cards .wemd-tcc-desc",
+      wemdSelector: ".wemd-two-column-cards .wemd-vc-desc",
     },
   ],
 };

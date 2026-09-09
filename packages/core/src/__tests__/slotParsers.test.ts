@@ -55,17 +55,31 @@ describe("slotParsers 分槽", () => {
     ]);
   });
 
-  it("two-column-cards：list 条目 icon/title/desc", () => {
+  it("two-column-cards：list 条目 title/desc（多行）", () => {
     const result = parseComponentSlots(
       parser(),
       "two-column-cards",
-      "- 🚀\n  **标题A**\n  描述A描述A\n- 🎨\n  **标题B**\n  描述B",
+      "- **标题A**\n  描述A描述A\n- **标题B**\n  描述B",
     ) as SlotContent & {
-      items: Array<{ icon: string; title: string; desc: string }>;
+      items: Array<{ title: string; desc: string }>;
     };
     expect(result.items).toEqual([
-      { icon: "🚀", title: "标题A", desc: "描述A描述A" },
-      { icon: "🎨", title: "标题B", desc: "描述B" },
+      { title: "标题A", desc: "描述A描述A" },
+      { title: "标题B", desc: "描述B" },
+    ]);
+  });
+
+  it("two-column-cards：单行「·」写法拆成 title/desc", () => {
+    const result = parseComponentSlots(
+      parser(),
+      "two-column-cards",
+      "- **性格开朗** · 适应力强，敢于主动沟通\n- **自律能力** · 能自主规划学习和生活",
+    ) as SlotContent & {
+      items: Array<{ title: string; desc: string }>;
+    };
+    expect(result.items).toEqual([
+      { title: "性格开朗", desc: "适应力强，敢于主动沟通" },
+      { title: "自律能力", desc: "能自主规划学习和生活" },
     ]);
   });
 
@@ -133,6 +147,35 @@ describe("slotParsers 分槽", () => {
     expect(result.title).toBe("谢谢阅读");
     expect(result.subtitle).toBe("关注我");
     expect(result.deco).toBe("装饰文字");
+  });
+
+  it("end-card：多余换行不丢内容——多段长正文全进 body", () => {
+    const result = parseComponentSlots(
+      parser(),
+      "end-card",
+      "写在最后\n\n教育没有标准答案，适合孩子的规划，才是最好的规划。它能给孩子更开阔的视野、多元的思维，但无法拯救不自律、无规划、缺引导的成长问题。\n\n理性规划，才是最好的规划。它需要家长、孩子与专业顾问多方协作，在漫长的成长周期里不断校准方向，才能点亮那条并不拥挤的升学赛道。",
+    );
+    expect(result.title).toBe("写在最后");
+    // 长正文不匹配 subtitle/deco，全部落入 body 兜底完整保留
+    expect(result.body).toContain("教育没有标准答案");
+    expect(result.body).toContain("理性规划，才是最好的规划");
+    expect(result.subtitle).toBeUndefined();
+    expect(result.deco).toBeUndefined();
+  });
+
+  it("end-card：31~40 字正文短句不被误吞进 deco", () => {
+    const result = parseComponentSlots(
+      parser(),
+      "end-card",
+      "写在最后\n\nK12留学，从来不是升学捷径，而是另一条更考验综合能力的赛道。\n\n它能给孩子更开阔的视野、多元的思维、国际化的平台，但无法拯救不自律、无规划、缺引导的成长问题。",
+    );
+    expect(result.title).toBe("写在最后");
+    // 首段 31 字恰好落在 deco 的 ≤40 窗口内，但它是正经句子（含中文句读），
+    // 必须回归 body，禁止被当装饰尾标吞掉。
+    expect(result.body).toContain("K12留学，从来不是升学捷径");
+    expect(result.body).toContain("它能给孩子");
+    expect(result.subtitle).toBeUndefined();
+    expect(result.deco).toBeUndefined();
   });
 });
 

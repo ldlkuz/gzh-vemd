@@ -64,14 +64,8 @@ export const COMPONENT_SAMPLES: ComponentSampleMap = {
 扫码关注公众号
 :::`,
   ],
-  "numbered-heading": [
-    `::: numbered-heading{index="01"}
-01
-
-从生成到共创
-:::`,
-  ],
-  "section-title": [`::: section-title\nAI 不再只是工具\n:::`],
+  "numbered-heading": [`## 01 从生成到共创`],
+  "section-title": [`## AI 不再只是工具`],
   "image-text-row": [
     `::: image-text-row
 ![](https://picsum.photos/seed/itr/600/400)
@@ -161,12 +155,12 @@ AI 不再只是简单的工具，而是创作者的合作者。
   ],
   "two-column-cards": [
     `::: two-column-cards
-- 🚀
-  **标题A**
-  描述A
-- 🎨
-  **标题B**
-  描述B
+- **性格开朗**
+  适应力强，敢于主动沟通、突破自我
+- **自律能力**
+  能自主规划学习和生活
+- **探究意识**
+  不局限于应试，喜欢探究、实践、多元学习模式
 :::`,
   ],
   "end-card": [`::: end-card\n感谢你读到此处\n\n字节跳动 · 信息跃动\n:::`],

@@ -310,7 +310,19 @@ export default function markdownItComponent(
       rawContent,
       opts?.getSlotDefs?.(componentName),
     );
-    const filled = fillTemplate(template, slotContent);
+    // props 合并进模板数据：让骨架的 {{#if key}}/{{slot:key}} 能读到 props
+    // （如 {author="..."}），slot 内容优先，即分槽结果覆盖同名 prop。
+    const propsScalar: Record<string, string> = {};
+    for (const [key, value] of Object.entries(props)) {
+      if (
+        typeof value === "string" ||
+        typeof value === "number" ||
+        typeof value === "boolean"
+      ) {
+        propsScalar[key] = String(value);
+      }
+    }
+    const filled = fillTemplate(template, { ...propsScalar, ...slotContent });
 
     // 组件内部经 renderBody 渲染的子串会注入"相对子串"的错误行号锚点，
     // 必须先剥离，再只注入外层组件的绝对行号锚点，避免污染滚动同步的锚点集合。

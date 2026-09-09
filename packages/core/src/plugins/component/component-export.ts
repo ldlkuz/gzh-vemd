@@ -16,6 +16,8 @@ import { BUILTIN_SLOT_DEFS, getBuiltinSlotDef } from "./slotDefs";
 import { mergeSlotOverrides } from "./slotParsers";
 import { getComponentSampleMarkdown } from "./slotSamples";
 import { getBuiltInThemeDefinition } from "../../builtin-themes";
+import { getDefaultTemplate } from "./defaultTemplates";
+import { parseSkeletonSlots } from "./skeletonSlotMap";
 
 /** 导出选项 */
 export interface ComponentExportOptions {
@@ -36,6 +38,62 @@ const SLOT_TYPE_LABEL: Record<string, string> = {
   code: "代码",
   decorative: "装饰",
 };
+
+/**
+ * 原生层自动识别的组件：由原生 Markdown 语法触发，`dual` 标记表示"同时支持 ::: 指令"。
+ * 与 markdown-it-native-layer 的路由一致：
+ * - heading + 数字前缀 → numbered-heading；普通 heading → section-title；
+ * - 代码围栏（非 mermaid）→ code-frame；
+ * - 表格 → styled-table；块引用 → pullquote；分隔线 → divider；
+ *   单张图片 → image-card；连续多张 → image-grid（后两者 dual，指令写法可带更细字段）。
+ * mode：缺省 only（只能/宜用原生）；dual = 原生为主、::: 可选。
+ */
+interface NativeSyntax {
+  trigger: string;
+  note: string;
+  dual?: boolean;
+}
+const NATIVE_AUTO_COMPONENTS: Record<string, NativeSyntax> = {
+  "numbered-heading": {
+    trigger: "## 1. 章节标题",
+    note: "写数字开头的二级标题（如 `## 1. …`、`## 01 …`、`## 第一步`），渲染时自动套用「编号章节标题」样式。",
+  },
+  "section-title": {
+    trigger: "## 章节标题",
+    note: "普通二级标题即自动套用「章节标题」样式。",
+  },
+  "code-frame": {
+    trigger: "```js\n代码……\n```",
+    note: "三个反引号的代码围栏即自动套用「代码块」样式（mermaid 围栏除外）。",
+  },
+  "styled-table": {
+    trigger: "| 名称 | 说明 |\n| --- | --- |\n| 冷板 | 高换热 |",
+    note: "标准管线表格即自动对齐列宽成「数据表格」；若需自定义对齐，也可用 `::: styled-table` 指令书写。",
+    dual: true,
+  },
+  pullquote: {
+    trigger: "> 这里的金句正文",
+    note: "块引用即自动成「金句引用」；若需「金句 + 署名」等更细结构，也可用 `::: pullquote` 指令。",
+    dual: true,
+  },
+  divider: {
+    trigger: "---",
+    note: "三个以上 `-` / `*` / `_` 即自动成「分隔线」；也可用 `::: divider` 指令。",
+    dual: true,
+  },
+  "image-card": {
+    trigger: "![图片说明](图片地址)",
+    note: "独占一行的单张图片即自动成「单图卡片」；若需封面/标题/说明字段，也可用 `::: image-card` 指令。",
+    dual: true,
+  },
+  "image-grid": {
+    trigger: "![图A](a.png)\n![图B](b.png)",
+    note: "连续多行的多张图片（≥2 张）自动成「多图网格」；也可用 `::: image-grid` 指令。",
+    dual: true,
+  },
+};
+
+const isNativeAuto = (id: string): boolean => id in NATIVE_AUTO_COMPONENTS;
 
 /** Input Contract source → 给排版者看的"怎么写"提示 */
 function describeInput(
@@ -73,7 +131,10 @@ function describeInput(
 }
 
 /** 判断槽位是否必填 */
-function isRequired(slot: { required?: boolean; input?: { cardinality?: string } }): boolean {
+function isRequired(slot: {
+  required?: boolean;
+  input?: { cardinality?: string };
+}): boolean {
   if (slot.required) return true;
   return slot.input?.cardinality === "one";
 }
@@ -138,8 +199,27 @@ function renderComponent(
 
   const lines: string[] = [];
   lines.push(`## ${id}`);
+
+  // 原生层组件：教原生语法，不教学 ::: 指令
+  const native = NATIVE_AUTO_COMPONENTS[id];
+  if (native) {
+    lines.push("");
+    lines.push(
+      native.dual
+        ? `（可用原生语法——推荐；也可用 \`::: ${id}\` 指令细化字段）`
+        : "（原生组件：由原生语法自动识别，**无需** `::: 组件名` 包裹）",
+    );
+    lines.push("");
+    lines.push(fence(native.trigger));
+    lines.push(`- ${native.note}`);
+    lines.push("");
+    lines.push("---");
+    lines.push("");
+    return lines.join("\n");
+  }
+
   // 语法围栏仅示意；可复制的是下方"示例"块（含真实插槽填充）
-  lines.push(`\`\`\`md\n::: ${id}\n…内容…\n:::\n\`\`\``);
+  lines.push(`\`\`\`md\n::: ${id}\n…内容…\n:::\`\`\``);
 
   // 插槽表
   lines.push("");
@@ -180,35 +260,44 @@ export function exportThemeComponentGuide(
   options: ComponentExportOptions = {},
 ): string {
   const themeDef = resolveTheme(theme);
-  const themeName = themeDef?.meta.name ?? (typeof theme === "string" ? theme : "未命名主题");
+  const themeName =
+    themeDef?.meta.name ?? (typeof theme === "string" ? theme : "未命名主题");
   const description = themeDef?.meta.description;
   const only = options.only ? new Set(options.only) : null;
-  const list = BUILTIN_SLOT_DEFS.filter(
-    (d) => !only || only.has(d.id),
-  );
+  const list = BUILTIN_SLOT_DEFS.filter((d) => !only || only.has(d.id));
 
   const out: string[] = [];
   out.push(`# ${options.title ?? `${themeName} · 组件排版参考`}`);
   if (description) out.push("");
   if (description) out.push(`> ${description}`);
   out.push("");
-  out.push("全部正文与组件内容都用 Markdown 书写。先掌握下面这份基础语法，再看组件用法。");
+  out.push(
+    "全部正文与组件内容都用 Markdown 书写。先掌握下面这份基础语法，再看组件用法。",
+  );
   out.push("");
   out.push(renderBaseMarkdownSection());
   out.push("");
   out.push("本说明列出的组件用如下围栏包裹：");
   out.push("");
-  out.push(fence("::: 组件名{属性=\"值\"}\n内容……\n:::"));
+  out.push(fence('::: 组件名{属性="值"}\n内容……\n:::'));
+  out.push("");
+  out.push(
+    "> 标题章节（`## 编号 标题`）、代码围栏、表格、块引用、分隔线、图片等默认用原生 Markdown 书写即可自动识别，见各自条目内的「写法」；其余组件用下方围栏包裹。",
+  );
   out.push("");
   out.push("> 说明");
-  out.push("> - 首行 `{属性=\"值\"}` 为可选的组件属性（如标题、作者），不填则组件按默认形态渲染；");
+  out.push(
+    '> - 首行 `{属性="值"}` 为可选的组件属性（如标题、作者），不填则组件按默认形态渲染；',
+  );
   out.push("> - 组件内部可嵌套任意 Markdown（段落、图片、列表甚至其他组件）；");
   out.push("> - 一篇公众号文章不必用全，按需选 8–12 个即可。");
   out.push("");
   out.push("## 组件清单");
   out.push("");
   for (const d of list) {
-    out.push(`- [${d.id}](#${d.id}) — ${d.slots.map((s) => s.semantic).join("、") || d.id}`);
+    out.push(
+      `- [${d.id}](#${d.id}) — ${d.slots.map((s) => s.semantic).join("、") || d.id}`,
+    );
   }
   out.push("");
   out.push("---");
@@ -228,5 +317,156 @@ export function exportThemeComponentGuide(
     out.push("- 命名遵循主题字体与色板，无需额外排版样式。");
   }
 
-  return out.join("\n").replace(/\n{3,}/g, "\n\n").trim() + "\n";
+  return (
+    out
+      .join("\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim() + "\n"
+  );
+}
+
+/**
+ * 生成面向 AI 的紧凑组件手册 —— buildAIGuide
+ *
+ * 供「AI 排版（整篇）」作为组件词典喂给 LLM。与 exportThemeComponentGuide 不同：
+ * 面向 AI，去除基础 Markdown 段落与人类排版说明，每组件只保留：
+ * 1. 用途（来自合并后的 slotDefs 语义）
+ * 2. 槽位清单（key / 必填 / 怎么填 / 语义）
+ * 3. **本主题骨架渲染顺序**（来自 parseSkeletonSlots，覆盖 slotDefs 未表达的骨架差异，
+ *    例如 silent-keynote 的 magazine-cover 是 eyebrow←title、大标题←subtitle）
+ * 4. 一个可照抄的示例（getComponentSampleMarkdown）
+ */
+export interface AIGuideOptions {
+  /** 只包含这些组件 id；缺省包含全部内置组件 */
+  only?: string[];
+}
+
+export function buildAIGuide(
+  theme: ThemeDefinition | string,
+  options: AIGuideOptions = {},
+): string {
+  const themeDef = resolveTheme(theme);
+  const onlySet = options.only ? new Set(options.only) : null;
+  const list = BUILTIN_SLOT_DEFS.filter((d) => !onlySet || onlySet.has(d.id));
+
+  const out: string[] = [];
+  out.push("## 可用组件（只允许使用下列组件，用 ::: 包裹渲染）");
+  out.push("");
+  out.push("通用写法：");
+  out.push(fence('::: 组件名{属性="值"}\n内容……\n:::'));
+  out.push("");
+  out.push(
+    "部分为原生自动识别组件（标题 / 代码围栏 / 表格 / 块引用 / 分隔线 / 图片），条目内标出原生写法并优先推荐；其中标注「也可用 ::: 」的，指令写法用于细化字段。勿把纯原生组件当 ::: 用。",
+  );
+  out.push("");
+  out.push(
+    "以下每个组件的『骨架渲染顺序』是当前主题实际的显示结构，填 body 时严格按此顺序组织内容。",
+  );
+  out.push("");
+
+  for (const d of list) {
+    const themeSlots = themeDef?.slotDefs?.[d.id];
+    const template =
+      (themeDef?.templates ?? {})[d.id] ?? getDefaultTemplate(d.id);
+    out.push(renderAIAgentComponent(themeDef, d.id, themeSlots, template));
+  }
+
+  return (
+    out
+      .join("\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim() + "\n"
+  );
+}
+
+/** 渲染单个组件的 AI 用法片段 */
+function renderAIAgentComponent(
+  themeDef: ThemeDefinition | undefined,
+  id: string,
+  themeSlots: NonNullable<ThemeDefinition["slotDefs"]>[string] | undefined,
+  template: string,
+): string {
+  const baseDef = getBuiltinSlotDef(id) ?? {
+    id,
+    abbr: id.replace(/-/g, ""),
+    slots: [],
+  };
+  const merged = mergeSlotOverrides(baseDef, themeSlots);
+  const skeleton = parseSkeletonSlots(template);
+  const themeSlotKeys = new Set((themeSlots ?? []).map((s) => s.key));
+
+  const lines: string[] = [];
+  lines.push(`### ${id}`);
+
+  // 原生层组件：不教学 ::: 指令，转为教原生触发语法
+  const native = NATIVE_AUTO_COMPONENTS[id];
+  if (native) {
+    lines.push(
+      native.dual
+        ? `（可用原生语法——推荐；也可用 \`::: ${id}\` 指令细化字段）`
+        : "（原生组件：由原生语法自动识别，**不要**用 `::: 组件名` 包裹）",
+    );
+    lines.push("");
+    lines.push("- 写法（自动识别）：");
+    lines.push("");
+    lines.push(fence(native.trigger));
+    lines.push(`- ${native.note}`);
+    lines.push("");
+    lines.push("---");
+    lines.push("");
+    return lines.join("\n");
+  }
+
+  // 用途（合并后的槽位语义）＋ 主题扩展标记
+  const semantics = merged.slots
+    .map((s) => s.semantic + (themeSlotKeys.has(s.key) ? "（主题扩展）" : ""))
+    .filter(Boolean)
+    .join("；");
+  if (semantics) lines.push(`- 用途：${semantics}`);
+
+  // 槽位清单（插槽表，AI 按列取"填什么 / 必填 / 写法"，比压缩列表命中更稳）
+  if (merged.slots.length) {
+    lines.push("- 槽位：");
+    lines.push("");
+    lines.push("| 槽位 | 填什么 | 必填 | 写法 |");
+    lines.push("| --- | --- | --- | --- |");
+    for (const slot of merged.slots) {
+      const required = isRequired(slot) ? "必填" : "可选";
+      const how = describeInput(slot.input?.source, slot.input?.cardinality);
+      let semantic = slot.semantic;
+      if (slot.type === "list" && slot.item_slots?.length) {
+        semantic += `（每项含：${slot.item_slots.map((f) => f.semantic).join("、")}）`;
+      }
+      if (themeSlotKeys.has(slot.key)) semantic += "（主题扩展）";
+      lines.push(`| ${slot.key} | ${semantic} | ${required} | ${how} |`);
+    }
+  }
+
+  // 本主题骨架渲染顺序（弥补 slotDefs 未表达的骨架差异）
+  if (skeleton.length) {
+    const seq = skeleton
+      .map((s) => {
+        const sign =
+          s.kind === "list"
+            ? `[列表项含：${s.itemFields.join("、") || "body"}]`
+            : "";
+        const req = s.optional ? "可选" : "必含";
+        const cls = s.elementClass ? `(.${s.elementClass})` : "";
+        return `${s.key}${sign}${cls}【${req}】`;
+      })
+      .join(" → ");
+    lines.push(`- 骨架渲染顺序：${seq}`);
+  }
+
+  // 示例
+  const sample = getComponentSampleMarkdown(themeDef, id);
+  if (sample) {
+    lines.push("- 示例：");
+    lines.push("");
+    lines.push(fence(`::: ${id}\n${sample}\n:::`));
+  }
+  lines.push("");
+  lines.push("---");
+  lines.push("");
+  return lines.join("\n");
 }
