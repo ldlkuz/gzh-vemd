@@ -758,6 +758,14 @@ export const componentStylesSunsetFilm = `/* === 落日胶片（胶片黄昏）�
   letter-spacing: 0.12em;
   color: #c9a8b6;
 }
+/* 深紫黑盘底上的正文：必须连 <p> 覆盖（全局 #wemd p 会把段落染成深字），浅字保证可读 */
+#wemd .wemd-end-card .wemd-ec-body,
+#wemd .wemd-end-card .wemd-ec-body p {
+  color: #e4d2c2;
+}
+#wemd .wemd-end-card .wemd-ec-body strong {
+  color: #f7ead8;
+}
 
 /* === share-card 分享页脚 === */
 #wemd .wemd-share-card {

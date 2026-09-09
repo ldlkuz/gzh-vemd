@@ -35,6 +35,7 @@ export const kbEndCard = (): string =>
     '<section class="wemd-component wemd-end-card" data-component="end-card">',
     '{{#if subtitle}}<div class="wemd-kb-bag-lbl">{{slot:subtitle}}</div>{{/if}}',
     '{{#if title}}<div class="wemd-kb-bag-title">{{slot:title}}</div>{{/if}}',
+    '{{#if body}}<div class="wemd-ec-body">{{slot:body}}</div>{{/if}}',
     '{{#if deco}}<div class="wemd-kb-bag-meta">{{slot:deco}}</div>{{/if}}',
     "</section>",
   ].join("\n");

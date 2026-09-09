@@ -53,6 +53,7 @@ export const skEndCard = (): string =>
     '<span class="wemd-sk-end-line">&nbsp;</span>',
     '{{#if title}}<section class="wemd-sk-end-eyebrow">{{slot:title}}</section>{{/if}}',
     '{{#if subtitle}}<section class="wemd-sk-end-title">{{slot:subtitle}}</section>{{/if}}',
+    '{{#if body}}<section class="wemd-ec-body">{{slot:body}}</section>{{/if}}',
     '{{#if deco}}<section class="wemd-sk-end-meta">{{slot:deco}}</section>{{/if}}',
     "</section>",
     "</section>",

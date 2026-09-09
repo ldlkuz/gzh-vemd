@@ -54,21 +54,19 @@ export const modernEditorialDivider = (): string =>
     "</section>",
   ].join("\n");
 
-/** 大引语：超大引号 + 引文 + 署名（真实元素） */
+/** 大引语：引文 + 署名（真实元素，竖条由皮肤 border-left 表达） */
 export const modernEditorialQuoteCard = (): string =>
   [
     '<section class="wemd-component wemd-quote-card" data-component="quote-card">',
-    '<span class="wemd-me-qmark">\u201C</span>',
     '<section class="wemd-qc-quote">{{slot:quote}}</section>',
     '{{#if author}}<section class="wemd-qc-author">{{slot:author}}</section>{{/if}}',
     "</section>",
   ].join("\n");
 
-/** 编辑式引语：超大引号 + 引文（真实元素） */
+/** 编辑式引语：竖条 + 引文（真实元素） */
 export const modernEditorialFullQuote = (): string =>
   [
     '<section class="wemd-component wemd-full-quote" data-component="full-quote">',
-    '<span class="wemd-me-qmark">\u201C</span>',
     '<section class="wemd-fq-text">{{slot:text}}</section>',
     "</section>",
   ].join("\n");
@@ -79,6 +77,7 @@ export const modernEditorialEndCard = (): string =>
     '<section class="wemd-component wemd-end-card" data-component="end-card">',
     '{{#if title}}<section class="wemd-ec-title">{{slot:title}}</section>{{/if}}',
     '{{#if subtitle}}<section class="wemd-ec-subtitle">{{slot:subtitle}}</section>{{/if}}',
+    '{{#if body}}<section class="wemd-ec-body">{{slot:body}}</section>{{/if}}',
     '<span class="wemd-me-line">&nbsp;</span>',
     '{{#if deco}}<section class="wemd-me-editors">{{slot:deco}}</section>{{/if}}',
     "</section>",

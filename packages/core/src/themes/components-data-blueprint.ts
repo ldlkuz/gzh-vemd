@@ -110,19 +110,20 @@ export const componentStylesDataBlueprint = `/* === 数据蓝图：正文/内容
   color: #ffffff;
 }
 
-/* image-card / two-column-cards：去深蓝底，白底 + 细边框 */
+/* image-card / two-column-cards：去深蓝底，白底 + 细科技蓝边框 */
 #wemd .wemd-image-card {
   background: #ffffff;
   border: 1px solid #bae6fd;
   box-shadow: none;
 }
-#wemd .wemd-two-column-cards .wemd-tcc-wrapper {
+#wemd .wemd-two-column-cards .wemd-vc-list {
   background: transparent;
 }
-#wemd .wemd-two-column-cards .wemd-tcc-item {
+#wemd .wemd-two-column-cards .wemd-vc-item {
   background: #ffffff;
   border: 1px solid #bae6fd;
   border-radius: 12px;
+  box-shadow: none;
 }
 
 /* === 数据类卡片：改浅底（白 + 浅蓝边），保留数据感 === */

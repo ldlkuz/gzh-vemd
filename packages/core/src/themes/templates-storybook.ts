@@ -69,6 +69,7 @@ export const storyEndCard = (): string =>
     '{{#if title}}<p class="wemd-sk-end-mark">{{slot:title}}</p>{{/if}}',
     '{{#if heading}}<p class="wemd-sk-end-heading">{{slot:heading}}</p>{{/if}}',
     '{{#if subtitle}}<p class="wemd-sk-end-text">{{slot:subtitle}}</p>{{/if}}',
+    '{{#if body}}<section class="wemd-ec-body">{{slot:body}}</section>{{/if}}',
     '<span class="wemd-sk-end-rule">&nbsp;</span>',
     "</section>",
     "</section>",

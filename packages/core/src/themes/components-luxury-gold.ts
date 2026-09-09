@@ -732,6 +732,14 @@ export const componentStylesLuxuryGold = `/* === 黑金奢华：荣誉证书 · 
   color: #e6c97a;
   opacity: 1;
 }
+/* 深咖金底正文：必须连 <p> 覆盖（全局 #wemd p 会染深字），浅米字保证可读 */
+#wemd .wemd-end-card .wemd-ec-body,
+#wemd .wemd-end-card .wemd-ec-body p {
+  color: #faf3e0;
+}
+#wemd .wemd-end-card .wemd-ec-body strong {
+  color: #e6c97a;
+}
 
 /* === share-card · 分享（顶金线） === */
 #wemd .wemd-share-card {

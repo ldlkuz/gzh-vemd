@@ -1249,7 +1249,7 @@ NO. 01
     expect(out).not.toMatch(/wemd-mat[^>]*height: 1px/);
   });
 
-  it("quote-card：定制骨架超大引号 + 编辑红左条", () => {
+  it("quote-card：定制骨架无引号（仅编辑红左条 + 引文）", () => {
     const out = renderWithModernEditorial(
       `::: quote-card
 编辑不是删减，而是收敛。
@@ -1257,20 +1257,21 @@ NO. 01
 署名：**编辑部**
 :::`,
     );
-    expect(out).toContain("wemd-me-qmark");
+    expect(out).not.toContain("wemd-me-qmark");
+    expect(out).toContain("wemd-qc-quote");
     const sec =
       out.match(/<section class="wemd-component wemd-quote-card"[^>]*>/)?.[0] ??
       "";
     expect(sec).toContain("border-left: 3px solid #d0342c");
   });
 
-  it("full-quote：定制骨架编辑式引语（超大引号 + 引文）", () => {
+  it("full-quote：定制骨架无引号（仅左侧竖条 + 引文）", () => {
     const out = renderWithModernEditorial(
       `::: full-quote
 编辑，是内容的守门人。
 :::`,
     );
-    expect(out).toContain("wemd-me-qmark");
+    expect(out).not.toContain("wemd-me-qmark");
     expect(out).toContain("wemd-fq-text");
   });
 
@@ -2344,7 +2345,10 @@ describe("晚晴：写给岁月 · 米纸楷宋 + 大字高对比 + 无盖章 ·
     // 主色赭橘在强调元素上
     expect(css).toContain("#a8613a");
     // #wemd 无整篇背景（交给公众号编辑器）：只查 #wemd { ... } 首个块
-    const wemdHead = css.slice(css.indexOf("#wemd {"), css.indexOf("#wemd {") + 400);
+    const wemdHead = css.slice(
+      css.indexOf("#wemd {"),
+      css.indexOf("#wemd {") + 400,
+    );
     expect(wemdHead).not.toMatch(/background/);
   });
 

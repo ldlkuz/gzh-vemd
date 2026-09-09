@@ -264,7 +264,7 @@ export const componentStylesModernEditorial = `/* === 编辑部手记：纸媒�
 
 /* === quote-card · 大引语（骨架定制：超大引号，左对齐） === */
 #wemd .wemd-quote-card {
-  margin: 40px 0 40px 10px;
+  margin: 40px 0; /* 不加 margin-left：竖条与正文左缘齐平（普通段落 margin-left:0） */
   padding: 10px 0 12px 28px;
   background: transparent;
   border: none;
@@ -272,23 +272,9 @@ export const componentStylesModernEditorial = `/* === 编辑部手记：纸媒�
   border-radius: 0;
   box-shadow: none;
   text-align: left;
-  /* 容器不用 position:relative —— 引号通过正常流 + 负 margin 飘出左上角 */
+  /* 无引号装饰：仅左侧竖条，引文从 padding-top 开始正常流 */
 }
-/* 超大引号装饰（真实元素 span，模板首个子元素）。
-   原 position:absolute; top:-14px; left:-6px; → 正常流 + 负 margin：
-   - 原位置（padding-top 10, padding-left 28, border-left 3 → y=10, x=31）
-   - 目标 y=-14 → margin-top = -14 - 10 = -24px
-   - 目标 x=-6 → margin-left = -6 - 31 = -37px
-   - 字号 64 → margin-bottom=-64px 让后续正文与装饰字形重叠，不再额外占高。 */
-#wemd .wemd-quote-card .wemd-me-qmark {
-  display: block;
-  margin: -24px 0 -64px -37px;
-  font-family: Georgia, serif;
-  font-size: 64px;
-  line-height: 1;
-  color: #d0342c;
-  opacity: 0.9;
-}
+/* 无超大引号：本主题 quote-card 仅由左侧红竖条 + 引文表达引语 */
 #wemd .wemd-quote-card .wemd-qc-quote {
   font-family: "Georgia", "Noto Serif SC", "Songti SC", "STSong", "Source Han Serif SC", serif;
   font-size: 22px;
@@ -309,29 +295,14 @@ export const componentStylesModernEditorial = `/* === 编辑部手记：纸媒�
 
 /* === full-quote · 编辑式引语（骨架定制） === */
 #wemd .wemd-full-quote {
-  margin: 40px 0 40px 10px;
-  padding: 24px 0 24px 26px;
+  margin: 40px 0; /* 不加 margin-left：竖条与正文左缘齐平（普通段落 margin-left:0） */
+  padding: 18px 0 18px 26px;
   background: transparent;
   border: none;
   border-left: 4px solid #1c1a17;
   border-radius: 0;
   text-align: left;
-  /* 容器不用 position:relative —— 引号正常流 + 负 margin 定位 */
-}
-/* 编辑式引语超大引号装饰。
-   原 position:absolute; top:6px; left:-6px; → 正常流 + 负 margin：
-   - 原位置（padding-top 24, padding-left 26, border-left 4 → y=24, x=30）
-   - 目标 y=6 → margin-top = 6 - 24 = -18px
-   - 目标 x=-6 → margin-left = -6 - 30 = -36px
-   - 字号 60 → margin-bottom=-60px 让后续正文重叠。 */
-#wemd .wemd-full-quote .wemd-me-qmark {
-  display: block;
-  margin: -18px 0 -60px -36px;
-  font-family: Georgia, serif;
-  font-size: 60px;
-  line-height: 1;
-  color: #d0342c;
-  opacity: 0.9;
+  /* 无引号装饰：仅左侧竖条，引文从 padding-top 开始正常流 */
 }
 #wemd .wemd-full-quote .wemd-fq-text {
   font-family: "Georgia", "Noto Serif SC", "Songti SC", "STSong", "Source Han Serif SC", serif;
@@ -720,6 +691,19 @@ export const componentStylesModernEditorial = `/* === 编辑部手记：纸媒�
   letter-spacing: 0.16em;
   color: #b9b2a4;
   text-transform: uppercase;
+}
+/* 深墨底正文：必须连 <p> 覆盖（全局 #wemd p 会染深字），近白字保证可读 */
+#wemd .wemd-end-card .wemd-ec-body,
+#wemd .wemd-end-card .wemd-ec-body p {
+  color: #faf8f2;
+}
+#wemd .wemd-end-card .wemd-ec-body strong {
+  color: #ffffff;
+}
+/* 深底上任意槽位的加粗字统一浅色：短句加粗可能被 subtitle 槽吞（≤30 字无句读），
+   而全局 #wemd strong 会把它内联成墨色，与深底同色不可见；更具体选择器兜底 */
+#wemd .wemd-end-card .wemd-ec-subtitle strong {
+  color: #faf8f2;
 }
 #wemd .wemd-end-card .wemd-me-line {
   display: block;

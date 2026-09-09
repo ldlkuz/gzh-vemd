@@ -278,6 +278,15 @@ export const componentStylesSilentKeynote = `/* === 无声发布（Silent Keynot
   font-style: inherit;
 }
 
+/* 深色收场盘正文：必须连 <p> 覆盖（全局 #wemd p 会把段落染成深字），近白字保证可读 */
+#wemd .wemd-sk-end .wemd-ec-body,
+#wemd .wemd-sk-end .wemd-ec-body p {
+  color: #f4f4f0;
+}
+#wemd .wemd-sk-end .wemd-ec-body strong {
+  color: #ff4d00;
+}
+
 /* === 无声分隔线 divider === */
 #wemd .wemd-divider {
   margin: 34px 0;
@@ -455,15 +464,23 @@ export const componentStylesSilentKeynote = `/* === 无声发布（Silent Keynot
 }
 
 /* === 提示框 === */
-/* 共享 callout-pro 根有 ::before 左竖条，本主题用 body 的 border-left 表达竖条 →
-   中和共享竖条，否则根 + body 双竖条。 */
+/* 本主题统一用 body 的 border-left 表达单条竖线 → 需把共享根元素彻底压平。
+   共享 callout-pro 根的竖线其实在 border-left（非 ::before），且带卡片底/圆角/阴影，
+   只清 ::before 会留下「根 border-left + body border-left」双竖线。 */
 #wemd .wemd-callout-pro::before {
   content: none;
 }
-/* 共享 callout（非 -pro）根元素自带 border-left:4px（非伪元素），同样用 body 表达 →
-   清掉共享根竖条/卡片底/圆角/padding，否则根 + body 双竖条。 */
+#wemd .wemd-callout-pro {
+  border: none;
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+/* 共享 callout（非 -pro）同样用 body 表达 → 清掉共享根竖条/卡片底/圆角/padding，避免根 + body 双竖条。 */
 #wemd .wemd-callout {
-  border-left: none;
+  border: none;
   background: transparent;
   border-radius: 0;
   padding: 0;

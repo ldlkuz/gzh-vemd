@@ -752,6 +752,15 @@ export const componentStylesMorandiForest = `/* === 莫兰迪森林：层林 · 
   letter-spacing: 0.26em;
   color: #c6d1b4;
 }
+/* 深色林底上的正文：覆盖共享 .wemd-ec-body 的深字兜底，且必须连 <p> 一起覆盖——
+   全局 #wemd p { color:#33382e } 会直接声明在段落上，仅改 section 会被继承丢失 */
+#wemd .wemd-end-card .wemd-ec-body,
+#wemd .wemd-end-card .wemd-ec-body p {
+  color: #dfe6d2;
+}
+#wemd .wemd-end-card .wemd-ec-body strong {
+  color: #f6f4ec;
+}
 #wemd .wemd-end-card .wemd-mf-mistline {
   display: block;
   width: 52px;

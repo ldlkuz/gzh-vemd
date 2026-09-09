@@ -43,6 +43,7 @@ export const receiptEndCard = (): string =>
     '<section class="wemd-component wemd-end-card" data-component="end-card">',
     '{{#if subtitle}}<div class="wemd-rc-label">{{slot:subtitle}}</div>{{/if}}',
     '{{#if title}}<div class="wemd-rc-brand">{{slot:title}}</div>{{/if}}',
+    '{{#if body}}<div class="wemd-ec-body">{{slot:body}}</div>{{/if}}',
     '<span class="wemd-rc-line">&nbsp;</span>',
     '{{#if deco}}<div class="wemd-rc-meta">{{slot:deco}}</div>{{/if}}',
     "</section>",

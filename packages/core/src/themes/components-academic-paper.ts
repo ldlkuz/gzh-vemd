@@ -653,6 +653,14 @@ export const componentStylesAcademicPaper = `/* === 学术论文：学术期刊 
   color: #8b0000;
   opacity: 1;
 }
+/* 深藏蓝盘底正文：必须连 <p> 覆盖（全局 #wemd p 会染深字），浅字保证可读 */
+#wemd .wemd-end-card .wemd-ec-body,
+#wemd .wemd-end-card .wemd-ec-body p {
+  color: #ffffff;
+}
+#wemd .wemd-end-card .wemd-ec-body strong {
+  color: #ffd9d9;
+}
 
 /* === share-card · 分享（顶发丝线） === */
 #wemd .wemd-share-card {

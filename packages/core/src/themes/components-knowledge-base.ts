@@ -706,6 +706,14 @@ export const componentStylesKnowledgeBase = `/* === 知识库文章（知识档�
   letter-spacing: 0.1em;
   color: #9fb0cd;
 }
+/* 深灰蓝袋底正文：必须连 <p> 覆盖（全局 #wemd p 会染深字），浅字保证可读 */
+#wemd .wemd-end-card .wemd-ec-body,
+#wemd .wemd-end-card .wemd-ec-body p {
+  color: #dfe5ef;
+}
+#wemd .wemd-end-card .wemd-ec-body strong {
+  color: #f2f5fa;
+}
 
 /* === share-card 分享页脚 === */
 #wemd .wemd-share-card {

@@ -62,6 +62,7 @@ export const shoppingEndCard = (): string =>
     '{{#if title}}<p class="wemd-sg-signoff-name">{{slot:title}}</p>{{/if}}',
     '{{#if subtitle}}<p class="wemd-sg-signoff-date">{{slot:subtitle}}</p>{{/if}}',
     "</section>",
+    '{{#if body}}<section class="wemd-ec-body">{{slot:body}}</section>{{/if}}',
     "</section>",
   ].join("\n");
 

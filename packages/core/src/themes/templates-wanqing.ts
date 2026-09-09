@@ -73,6 +73,7 @@ export const wqEndCard = (): string =>
     '<span class="wemd-wq-end-rule">&nbsp;</span>',
     '{{#if title}}<p class="wemd-wq-end-mark">{{slot:title}}</p>{{/if}}',
     '{{#if subtitle}}<p class="wemd-wq-end-text">{{slot:subtitle}}</p>{{/if}}',
+    '{{#if body}}<section class="wemd-ec-body">{{slot:body}}</section>{{/if}}',
     "</section>",
     "</section>",
   ].join("\n");

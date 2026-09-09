@@ -29,11 +29,12 @@
  *
  * - two-column-cards:
  *   .wemd-two-column-cards
- *     .wemd-tcc-wrapper    两栏容器
- *       .wemd-tcc-item     每栏卡片
- *         .wemd-tcc-icon   图标
- *         .wemd-tcc-title  标题
- *         .wemd-tcc-desc   描述
+ *     .wemd-vc-list     单列列表容器
+ *       .wemd-vc-item   卡片项
+ *         .wemd-vc-stripe  左侧强调色带
+ *         .wemd-vc-body    内容区
+ *           .wemd-vc-title 标题
+ *           .wemd-vc-desc  描述
  *
  * - end-card:
  *   .wemd-end-card
@@ -93,7 +94,7 @@ export const componentStylesMagazine = `/* === magazine-cover 杂志封面卡片
 
 #wemd .wemd-section-divider .wemd-sd-part {
   margin: 0;
-  font-size: 13px;
+  font-size: 15px;
   color: var(--wemd-primary, #07c160);
   letter-spacing: 2px;
   font-weight: 500;
@@ -101,10 +102,10 @@ export const componentStylesMagazine = `/* === magazine-cover 杂志封面卡片
 
 #wemd .wemd-section-divider .wemd-sd-title {
   margin: 8px 0 0 0;
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 700;
   color: var(--wemd-text-strong, #1a1a1a);
-  line-height: 1.4;
+  line-height: 1.35;
 }
 
 /* === image-card 图片卡片 === */
@@ -181,49 +182,60 @@ export const componentStylesMagazine = `/* === magazine-cover 杂志封面卡片
   margin-top: 8px;
 }
 
-/* === two-column-cards 两栏卡片 === */
+/* === two-column-cards 单列特性卡片（左色带）=== */
 #wemd .wemd-two-column-cards {
   margin: 24px 0;
 }
 
-#wemd .wemd-two-column-cards .wemd-tcc-wrapper {
+#wemd .wemd-two-column-cards .wemd-vc-list {
   display: flex;
+  flex-direction: column;
   gap: 12px;
   width: 100%;
 }
 
-#wemd .wemd-two-column-cards .wemd-tcc-item {
-  flex: 1;
-  padding: 18px 12px;
+#wemd .wemd-two-column-cards .wemd-vc-item {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  padding: 14px 12px;
   background: var(--wemd-bg-card, #ffffff);
+  border: 1px solid var(--wemd-border, #e2e8f0);
   border-radius: calc(var(--wemd-border-radius, 8px) + 4px);
-  text-align: center;
-  box-shadow: var(--wemd-shadow, 0 2px 8px rgba(0, 0, 0, 0.04));
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--wemd-text-soft, #888888);
+  box-shadow: var(--wemd-shadow, 0 1px 5px rgba(0, 0, 0, 0.04));
   min-width: 0;
   word-break: break-word;
 }
 
-#wemd .wemd-two-column-cards .wemd-tcc-icon {
-  margin: 0;
-  font-size: 28px;
-  line-height: 1;
+#wemd .wemd-two-column-cards .wemd-vc-stripe {
+  flex: none;
+  align-self: stretch;
+  width: 5px;
+  border-radius: 3px;
+  background: var(--wemd-primary, #5468ff);
+  font-size: 0;
+  line-height: 0;
+  overflow: hidden;
 }
 
-#wemd .wemd-two-column-cards .wemd-tcc-title {
-  margin: 8px 0 4px 0;
+#wemd .wemd-two-column-cards .wemd-vc-body {
+  flex: 1;
+  min-width: 0;
+  align-self: center;
+}
+
+#wemd .wemd-two-column-cards .wemd-vc-title {
+  margin: 0;
   font-size: 15px;
-  color: var(--wemd-primary, #07c160);
   font-weight: 700;
+  color: var(--wemd-text-strong, #1a1a1a);
 }
 
-#wemd .wemd-two-column-cards .wemd-tcc-desc {
-  margin: 0;
+#wemd .wemd-two-column-cards .wemd-vc-desc {
+  margin: 4px 0 0 0;
   font-size: 13px;
-  color: var(--wemd-text-soft, #888888);
-  line-height: 1.6;
+  line-height: 1.65;
+  color: var(--wemd-text-soft, #475569);
 }
 
 /* === end-card 结尾致谢卡片 === */
@@ -245,6 +257,26 @@ export const componentStylesMagazine = `/* === magazine-cover 杂志封面卡片
   font-size: 13px;
   color: var(--wemd-text-soft, #999999);
   line-height: 1.6;
+}
+
+/* end-card 正文承接：多段结语正文以可读段落呈现（容器居中，正文左对齐便于长文阅读） */
+#wemd .wemd-end-card .wemd-ec-body,
+#wemd .wemd-end-card .wemd-ec-body p {
+  margin: 0 0 0 0;
+  text-align: left;
+  font-size: 16px;
+  line-height: 1.75;
+  /* 注意：正文段落色必须连 <p> 一起声明。全局 #wemd p 会直接给段落上色，
+     仅改 section 会被继承丢失；深色底主题覆盖时应联动 p。 */
+  color: var(--wemd-text-normal, #333333);
+}
+
+#wemd .wemd-end-card .wemd-ec-body > p {
+  margin: 0 0 10px 0;
+}
+
+#wemd .wemd-end-card .wemd-ec-body > p:last-child {
+  margin-bottom: 0;
 }
 
 #wemd .wemd-end-card .wemd-ec-deco {

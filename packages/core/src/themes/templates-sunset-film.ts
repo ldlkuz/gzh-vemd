@@ -29,6 +29,7 @@ export const sfEndCard = (): string =>
     '<span class="wemd-sf-grain">&nbsp;</span>',
     '{{#if subtitle}}<div class="wemd-sf-lbl">{{slot:subtitle}}</div>{{/if}}',
     '{{#if title}}<div class="wemd-sf-reel-title">{{slot:title}}</div>{{/if}}',
+    '{{#if body}}<div class="wemd-ec-body">{{slot:body}}</div>{{/if}}',
     '{{#if deco}}<div class="wemd-sf-meta">{{slot:deco}}</div>{{/if}}',
     "</section>",
   ].join("\n");

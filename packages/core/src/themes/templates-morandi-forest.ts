@@ -82,6 +82,7 @@ export const morandiForestEndCard = (): string =>
     "</div>",
     '{{#if title}}<section class="wemd-ec-title">{{slot:title}}</section>{{/if}}',
     '{{#if subtitle}}<section class="wemd-ec-subtitle">{{slot:subtitle}}</section>{{/if}}',
+    '{{#if body}}<section class="wemd-ec-body">{{slot:body}}</section>{{/if}}',
     '<span class="wemd-mf-mistline">&nbsp;</span>',
     "</section>",
   ].join("\n");
