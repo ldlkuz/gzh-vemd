@@ -105,6 +105,19 @@
   background: #ede9fe;
 }
 
+/* 主行动按钮 */
+.ai-layout-refresh-btn-primary {
+  background: #7c3aed;
+  color: #fff;
+  border-color: #7c3aed;
+  padding: 8px 22px;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.25);
+}
+
+.ai-layout-refresh-btn-primary:hover {
+  background: #6d28d9;
+}
+
 /* 摘要 */
 .ai-layout-summary {
   padding: 12px 20px;
@@ -114,9 +127,27 @@
   color: #6b21a8;
 }
 
+.ai-layout-summary p {
+  margin: 0;
+}
+
 .ai-layout-summary strong {
   color: #7c3aed;
   font-weight: 600;
+}
+
+/* 校验告警（越界组件 / 截断） */
+.ai-layout-warn {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: #fff7e6;
+  color: #9a6700;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 /* 文章类型识别 badge */

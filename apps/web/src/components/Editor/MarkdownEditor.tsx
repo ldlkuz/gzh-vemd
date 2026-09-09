@@ -21,10 +21,11 @@ import { openAiSettings, isAiConfigured } from "../../services/ai/aiConfig";
 import { convertTextToMarkdown } from "../../services/ai/markdownPipeline";
 import { AiLayoutPanel } from "./AiLayoutPanel";
 import {
-  analyzeArticle,
-  type Insertion,
-} from "../../services/ai/analysisAgent";
-import { applyInsertions } from "../../services/ai/applyInsertions";
+  buildRewriteGuide,
+  rewriteArticle,
+  validateRewrite,
+  sanitizeRewrite,
+} from "../../services/ai/rewriteAgent";
 import toast from "react-hot-toast";
 import "./MarkdownEditor.css";
 import { customKeymap } from "./editorShortcuts";
@@ -77,14 +78,16 @@ export function MarkdownEditor({
   const [showSearch, setShowSearch] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [showAuthorSuggestions, setShowAuthorSuggestions] = useState(false);
-  // AI 排版（插入式）状态
+  // AI 排版（整篇）状态
   const [showAiLayout, setShowAiLayout] = useState(false);
   const [aiLayoutLoading, setAiLayoutLoading] = useState(false);
-  const [aiInsertions, setAiInsertions] = useState<Insertion[]>([]);
-  const [aiArticleType, setAiArticleType] = useState<string | undefined>();
-  const [aiTypeReason, setAiTypeReason] = useState<string | undefined>();
+  const [aiRewritten, setAiRewritten] = useState<string | null>(null);
+  const [aiValidation, setAiValidation] = useState<{
+    invalid: string[];
+    truncated: boolean;
+  } | null>(null);
   const [aiLayoutPreviewing, setAiLayoutPreviewing] = useState(false);
-  // 预览撤销：记录插入预览前的原文
+  // 预览撤销：记录整篇替换前的原文
   const aiLayoutOriginalRef = useRef<string | null>(null);
   // store 同步防抖：编辑器输入即时，但通过防抖批量写 store，避免每次按键
   // 都触发全局 markdown 更新 → 预览整体重渲，大幅降低大文档输入卡顿。
@@ -358,7 +361,7 @@ export function MarkdownEditor({
     const textToInsert = selectedText || placeholder;
     const fullText = prefix + textToInsert + suffix;
 
-    let anchor = selection.from + prefix.length;
+    const anchor = selection.from + prefix.length;
     let head = anchor + textToInsert.length;
     // 组件插入：自动选中首个占位符（插入正文的第一行），用户可直接打字覆盖
     if (opts?.selectFirstLine) {
@@ -456,52 +459,65 @@ export function MarkdownEditor({
     setShowAiLayout(true);
   };
 
-  // 运行 AI 版式分析：在用户勾选的组件范围内生成
-  const runAiLayoutAnalysis = async (selectedComponents?: string[]) => {
+  // 运行 AI 整篇排版：AI 依据当前主题组件手册自行决定用哪些组件，重排整篇
+  const runAiRewrite = async () => {
     const view = viewRef.current;
     if (!view) return;
-    // 基于真原文分析（预览中时编辑器内容被替换，需回退）
+    // 基于真原文（预览中时编辑器内容被替换，需回退）
     const source = aiLayoutOriginalRef.current ?? view.state.doc.toString();
     setAiLayoutLoading(true);
     try {
-      // 获取当前主题的 layout 偏好，传递给 AI
+      // 获取当前主题的 layout 偏好与定义（自定义主题优先）
       const themeId = useThemeStore.getState().themeId;
       const builtInDef = getBuiltInThemeDefinition(themeId);
       const customThemes = useThemeStore.getState().customThemes;
       const customTheme = customThemes.find((t) => t.id === themeId);
-      // 优先使用导入主题自身的 layout，其次回退到内置主题
-      const themeLayout = customTheme?.definition?.layout || builtInDef?.layout;
-      const result = await analyzeArticle(
-        source,
+      const customDef = customTheme?.definition;
+      const themeLayout = customDef?.layout || builtInDef?.layout;
+      const { text: guide, knownIds } = buildRewriteGuide(
+        themeId,
         undefined,
-        undefined,
-        themeLayout,
-        selectedComponents,
+        customDef,
       );
-      setAiInsertions(result.insertions);
-      setAiArticleType(result.articleType);
-      setAiTypeReason(result.typeReason);
+      const result = await rewriteArticle(source, guide, themeLayout);
+      const validation = validateRewrite(result, knownIds);
+      const clean = sanitizeRewrite(result, knownIds);
+      setAiValidation({
+        invalid: validation.invalid,
+        truncated: validation.truncated,
+      });
+      setAiRewritten(clean);
+      if (validation.truncated) {
+        toast("AI 输出可能被截断，请预览确认后再应用", {
+          icon: "⚠️",
+          duration: 6000,
+        });
+      }
+      if (validation.invalid.length) {
+        toast.error(
+          `AI 使用了不在允许范围的组件：${validation.invalid.join("、")}，已自动剔除`,
+        );
+      }
     } catch (e) {
-      toast.error((e as Error).message || "AI 分析失败");
-      setAiInsertions([]);
+      toast.error((e as Error).message || "AI 排版失败");
+      setAiRewritten(null);
+      setAiValidation(null);
     } finally {
       setAiLayoutLoading(false);
     }
   };
 
-  // 整体预览：应用全部建议到编辑器（基于真原文，可撤销）
+  // 整篇预览：把 AI 输出的整篇 Markdown 替换进编辑器（可撤销）
   const handlePreviewAllLayout = () => {
     const view = viewRef.current;
-    if (!view || aiInsertions.length === 0) return;
+    if (!view || !aiRewritten) return;
     if (aiLayoutOriginalRef.current === null) {
       aiLayoutOriginalRef.current = view.state.doc.toString();
     }
-    const base = aiLayoutOriginalRef.current;
-    const next = applyInsertions(base, aiInsertions);
     view.dispatch({
-      changes: { from: 0, to: view.state.doc.length, insert: next },
+      changes: { from: 0, to: view.state.doc.length, insert: aiRewritten },
     });
-    setMarkdown(next);
+    setMarkdown(aiRewritten);
     setAiLayoutPreviewing(true);
   };
 
@@ -518,20 +534,18 @@ export function MarkdownEditor({
     setAiLayoutPreviewing(false);
   };
 
-  // 一键应用全部建议
+  // 一键应用整篇排版
   const handleApplyAllLayout = () => {
     const view = viewRef.current;
-    if (!view || aiInsertions.length === 0) return;
-    const base = aiLayoutOriginalRef.current ?? view.state.doc.toString();
-    const next = applyInsertions(base, aiInsertions);
+    if (!view || !aiRewritten) return;
     view.dispatch({
-      changes: { from: 0, to: view.state.doc.length, insert: next },
+      changes: { from: 0, to: view.state.doc.length, insert: aiRewritten },
     });
-    setMarkdown(next);
+    setMarkdown(aiRewritten);
     aiLayoutOriginalRef.current = null;
     setAiLayoutPreviewing(false);
     setShowAiLayout(false);
-    toast.success(`已应用 ${aiInsertions.length} 个组件`);
+    toast.success("已应用 AI 排版");
     view.focus();
   };
 
@@ -706,15 +720,14 @@ export function MarkdownEditor({
       <AiLayoutPanel
         open={showAiLayout}
         loading={aiLayoutLoading}
-        insertions={aiInsertions}
+        rewritten={aiRewritten}
+        validation={aiValidation}
         onClose={() => setShowAiLayout(false)}
-        onGenerate={runAiLayoutAnalysis}
+        onGenerate={runAiRewrite}
         onPreviewAll={handlePreviewAllLayout}
         onUndoPreview={handleUndoLayoutPreview}
         onApplyAll={handleApplyAllLayout}
         isPreviewing={aiLayoutPreviewing}
-        articleType={aiArticleType}
-        typeReason={aiTypeReason}
       />
     </div>
   );
